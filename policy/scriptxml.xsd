@@ -1,0 +1,1206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" elementFormDefault="qualified"
+           xmlns="http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml"
+           targetNamespace="http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml">
+    <xs:complexType name="StatementList">
+        <xs:sequence maxOccurs="unbounded" minOccurs="0">
+            <xs:group ref="Statement"/>
+        </xs:sequence>
+    </xs:complexType>
+    <xs:group name="Expression">
+        <xs:choice>
+            <xs:element ref="ConfigBlockCheck"/>
+            <xs:element ref="ConfigFileCheck"/>
+            <xs:element ref="CPDCheck"/>
+            <xs:element ref="Expr"/>
+            <xs:element ref="ListSearch"/>
+        </xs:choice>
+    </xs:group>
+    <xs:group name="Statement">
+        <xs:choice>
+            <xs:element ref="If"/>
+            <xs:element ref="StatementBlock"/>
+            <xs:element ref="ForEach"/>
+            <xs:group ref="Expression"/>
+            <xs:element ref="Assign"/>
+            <xs:element ref="SetFilter"/>
+            <xs:element ref="Map"/>
+            <xs:element ref="While"/>
+            <xs:element ref="Return"/>
+            <xs:element ref="PolicyRulePass"/>
+            <xs:element ref="PolicyRuleFail"/>
+            <xs:element ref="PolicyRuleCall"/>
+        </xs:choice>
+    </xs:group>
+    <xs:element name="Assign">
+        <xs:annotation>
+            <xs:documentation>Assigns the variable named in the 'variable' attribute the value of the child expression or text content if a child expression is not present. An Assign statement with no content and naming a non-existent variable will create the variable in the scope of the parent element.
+
+Setting the 'output' attribute of any element performs an equivalent function to this element.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:group ref="Expression" minOccurs="0"/>
+            <xs:attribute name="variable" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>The name of the variable to which to assign the value.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="value" type="xs:string" use="optional">
+                <xs:annotation>
+                    <xs:documentation>Assign this value to the variable. If defined, this value will be used, rather than the expression child element.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="scope" use="optional">
+                <xs:annotation>
+                    <xs:documentation>Defines the scope of the assignment. By default, this is 'resolve'.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="parent">
+                            <xs:annotation>
+                                <xs:documentation>Set the value in the scope of the parent element of the Assign element.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="root">
+                            <xs:annotation>
+                                <xs:documentation>Set the value in the scope of the root element of the document.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="resolve">
+                            <xs:annotation>
+                                <xs:documentation>Move up the element hierarchy, and set the first occurrence of the specified value, or set the value in the root scope if it does not appear in the hierarchy already.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="type">
+                <xs:annotation>
+                    <xs:documentation>Sets the return type of the expression explicitly. To create a nil expression, use type=’nil’ or type=’null’ (which are equivalent).</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="bool">
+                            <xs:annotation>
+                                <xs:documentation>A Boolean value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="boolean">
+                            <xs:annotation>
+                                <xs:documentation>A Boolean value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="int">
+                            <xs:annotation>
+                                <xs:documentation>An Integer value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="integer">
+                            <xs:annotation>
+                                <xs:documentation>An Integer value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="number">
+                            <xs:annotation>
+                                <xs:documentation>An Integer value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="float">
+                            <xs:annotation>
+                                <xs:documentation>A floating-point number.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="double">
+                            <xs:annotation>
+                                <xs:documentation>A floating-point number.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="decimal">
+                            <xs:annotation>
+                                <xs:documentation>A floating-point number.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="datetime">
+                            <xs:annotation>
+                                <xs:documentation>A (possible relative) datetime value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="ip">
+                            <xs:annotation>
+                                <xs:documentation>An IP address (IPv4 or IPv6).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="ipaddr">
+                            <xs:annotation>
+                                <xs:documentation>An IP address (IPv4 or IPv6).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="nil">
+                            <xs:annotation>
+                                <xs:documentation>The expression has no value, and therefore no type.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="null">
+                            <xs:annotation>
+                                <xs:documentation>The expression has no value, and therefore no type.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="SetFilter">
+        <xs:annotation>
+            <xs:documentation>This element takes a single input array, and sorts the entries into three different arrays, as follows. For each entry in the input array, the current object will be set to that entry, and the expression evaluated:
+   - If true, the entry will be stored in the array 'output' or the variable named in the output attribute;
+   - If false, the entry will be stored in the array 'skipped-output' or the variable named in the 'skipped-output' attribute;
+   - If an error occurs (for example, the running config for the device is out-of-date), the entry will be stored in the array 'errored-output', or in the variable named in the 'errored-output' attribute.
+  </xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:group ref="Expression" maxOccurs="unbounded"/>
+            <xs:attribute name="expression" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The expression attribute is a shorthand method of creating complex Boolean expressions based upon other elements. The expression attribute may consist of integers, parentheses, ‘and’, ‘or’, ‘if’, ‘then’, and ‘else’. The numbers should refer to direct child elements, which must include label attributes matching the numbers. </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="editor" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Identifies which of the user-interface Policy Rule editors should be used to edit this rule. Generally this should not be specifically set when creating XML rules outside of those editors. If it is set, it should be set to 'raw-xml'. If set to anything else, accessing the rule within the user interface may modify or clear the rule logic.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="input" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Contains the name of the variable to use as the input value. By default, the variable named 'input' will be used.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="errored-output" type="xs:string"/>
+            <xs:attribute name="skipped-output" type="xs:string"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="While">
+        <xs:annotation>
+            <xs:documentation>Repeatedly evaluates the expression, then the Do block if the expression is true. The repeated execution will stop the first time the expression evaluates to false.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:group ref="Expression"/>
+                <xs:element name="Do" type="StatementList"/>
+            </xs:sequence>
+            <xs:attribute name="variable" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Each time through the loop, a variable named '_loop_counter' is set to the current iteration (starting at 0). Setting this attribute changes the name of the variable to use for this purpose.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="limit" type="xs:positiveInteger">
+                <xs:annotation>
+                    <xs:documentation>The maximum number of iterations. This prevents infinite loops. The default value is 1000.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Return" type="StatementList">
+        <xs:annotation>
+            <xs:documentation>Stops execution, evaluates the Return's statement list, and returns the result.</xs:documentation>
+        </xs:annotation>
+    </xs:element>
+    <xs:element name="ForEach">
+        <xs:annotation>
+            <xs:documentation>Evaluates the expression, and treats the results as an array. For each entry in that array, a variable '_loop_value' will be set to the entry, and the contents of the Do element will be evaluated.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:group ref="Expression">
+                    <xs:annotation>
+                        <xs:documentation>The results of this expression will be treated as an array and iterated through by the ForEach element.</xs:documentation>
+                    </xs:annotation>
+                </xs:group>
+                <xs:element name="Do" type="StatementList"/>
+            </xs:sequence>
+            <xs:attribute name="variable" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>By default, a variable named _loop_value is set to the current value of the array over which the ForEach is iterating. This attribute may be set to change the name of the variable to be used for this purpose.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="ConfigBlockCheck">
+        <xs:complexType>
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+                <xs:group ref="Statement"/>
+            </xs:sequence>
+            <xs:attribute name="label" type="xs:positiveInteger">
+                <xs:annotation>
+                    <xs:documentation>Used in combination with the 'expression' attribute to identify each listed expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="object" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Specifies a variable name containing the object on which to act. Defaults to the variable 'input' if not specified. This will only be used if the object is not already known. For example, in the context of evaluating policy rule, the object is normally known and is the device; in the context of a SetFilter, the object is the current member of the set being filtered.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="regexp-mode">
+                <xs:annotation>
+                    <xs:documentation>The regular expression mode to apply to the block-start and block-end attributes; values are either ‘advanced’ or ‘basic’. The default is ‘advanced’. In basic mode, the entire attribute value is simply treated as a complete regular expression. In advanced mode, you may start the value with ‘/’, in which case the value will be interpreted as /regex/options. That is, you must have an ending /, and can include regular expression options (zero or more of m, x, i) after the ending /. Values not starting with / will behave the same as basic mode.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="advanced"/>
+                        <xs:enumeration value="basic"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="config-type">
+                <xs:annotation>
+                    <xs:documentation>Indicates whether to operate on the running or saved configuration, or on a block when nested inside a ConfigBlockCheck. By default, the running configuration is used unless this element is nested in a ConfigBlockCheck, in which case 'block' is used.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="running">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the running configuration.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="saved">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the saved configuration.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="block">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the current block being evaluated. If the element is not nested within a ConfigBlockCheck, this setting will result in an error.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="block-start">
+                <xs:annotation>
+                    <xs:documentation>A regular expression used identify the start of a configuration block. The resulting block text will start with the text that matches this regular expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="boundary-method" use="required">
+                <xs:annotation>
+                    <xs:documentation>The method to use to find the end of the block.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="regexp">
+                            <xs:annotation>
+                                <xs:documentation>Use a regular expression match to identify the end of a block. The block-end attribute must also be populated when using this method.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="indent">
+                            <xs:annotation>
+                                <xs:documentation>Use indentation to identify the end of a block. The first line with an indentation level matching the starting line will be considered the end of the block. This ending line will be included in the block; see end-on-block-start and include-ending-line for alternate behavior. By default, spaces and tabs are considered indent characters; this may be overridden via the indent-chars attribute.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="balanced-delims">
+                            <xs:annotation>
+                                <xs:documentation>Use balanced delimiters to identify a block. For example, balanced {} or () characters. The open-delim and close-delim attributes must also be populated when using this method. The block end will include the final closing close-delim.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="line-count">
+                            <xs:annotation>
+                                <xs:documentation>Use a simple count of lines to identify the end of the block. The actual number of lines in the block may be less than expected if the end-on-eof or end-on-block start attributes are set and one of those conditions is satisfied. The line-count attribute must also be populated when using this method.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="block-end">
+                <xs:annotation>
+                    <xs:documentation>The regular expression used identify the end of a configuration block when using boundary-method of 'regexp'. The resulting block text will end with the text that matches this regular expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="open-delim">
+                <xs:annotation>
+                    <xs:documentation>The opening delimiter when using boundary-method of 'balanced-delims'. The open-delim represents the left-hand, or opening, delimiter, for example "{" or "(".</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:minLength value="1"/>
+                        <xs:maxLength value="1"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="close-delim">
+                <xs:annotation>
+                    <xs:documentation>The closing delimiter when using boundary-method of 'balanced-delims'. The close-delim represents the right-hand, or closing, delimiter, for example "}" or ")".</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:minLength value="1"/>
+                        <xs:maxLength value="1"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="indent-chars" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Characters to treat as indentation when using the boundary-method 'indent'. The default is tab and space.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="include-ending-line" type="xs:boolean">
+                <xs:annotation>
+                    <xs:documentation>Valid when using the boundary-method 'indent', this controls whether the ending line (the line that falls to the same indent level as the starting line) is included in the block. The default is true.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="line-count" type="xs:positiveInteger">
+                <xs:annotation>
+                    <xs:documentation>The number of lines to include in the block when using the boundary-method 'line-count'. The line on which the block-start match is made will count as one line (but anything preceding the block-start on that line will not be part of the block). Note that end-on-block-start and end-on-eof can case the actual number of lines in the block to be less than this value.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="end-on-block-start" type="xs:boolean">
+                <xs:annotation>
+                    <xs:documentation>If this attribute is true, and a new block-start match is found prior to find the end of the block via the specified block-end or left-delim/right-delim method, the block will be treated as ending just before the new block-start match. The default is true.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="end-on-eof" type="xs:boolean">
+                <xs:annotation>
+                    <xs:documentation>If this attribute is true, and the end-of-file is found prior to find the end of the block via the specified block-end or left-delim/right-delim method, the block will be treated as ending at the EOF. The default is true.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="ConfigFileCheck">
+        <xs:annotation>
+            <xs:documentation>The contents of this element will be treated as one or more regular expressions, and validated against the configuration file. When a match is found, the variables “_message” and “_lineno” will be set, as appropriate to the type of check being performed.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+                <xs:group ref="Expression"/>
+            </xs:sequence>
+            <xs:attribute name="label" type="xs:positiveInteger">
+                <xs:annotation>
+                    <xs:documentation>Used in combination with the 'expression' attribute to identify each listed expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="note" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>A comment to describe the expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="object" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Specifies a variable name containing the object on which to act. Defaults to the variable 'input' if not specified. This will only be used if the object is not already known. For example, in the context of evaluating policy rule, the object is normally known and is the device; in the context of a SetFilter, the object is the current member of the set being filtered.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="op" use="required">
+                <xs:annotation>
+                    <xs:documentation>Defines the type of config file check to perform. The contents (text node or evaluation of sub-expressions) of the ConfigFileCheck element will be interpreted depending upon the operator.
+
+There are two types of operators: single-line operators, and block operators. 
+
+For single-line operators, the contents of the element will be split, and each line will be treated as a separate regular expression.
+
+For block operators, the entire contents of the ConfigFileCheck is treated as a single multi-line regular expression.
+
+</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="contains-one">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain exactly one line matching any of the regular expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="contains-some">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain at least one line matching one or more of the regular expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="contains-all">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain at least one line matching each of the regular expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="contains-all-ordered">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain at least one line matching each of the regular expressions, in the same order as the regular expressions are listed.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="does-not-contain-any">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain no lines matching any of the regular expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="contains-one-block">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain exactly one block matching the regular expression.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="contains-block">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must contain at least one block matching the regular expression.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="does-not-contain-block">
+                            <xs:annotation>
+                                <xs:documentation>The configuration file must not contain any matching the regular expression.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="regexp-mode">
+                <xs:annotation>
+                    <xs:documentation>Either ‘advanced’ or ‘basic’. The default is ‘advanced’. In basic mode, each line is simply treated as a complete regular expression. In advanced mode, if any line starts with ‘/’, that line will be interpreted as /regex/options. That is, you must have an ending /, and can include regular expression options (zero or more of m, x, i) after the ending /. Lines not starting with / will behave the same as basic mode.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="advanced"/>
+                        <xs:enumeration value="basic"/>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="config-type">
+                <xs:annotation>
+                    <xs:documentation>Indicates whether to operate on the running or saved configuration, or on a block when nested inside a ConfigBlockCheck. By default, the running configuration is used unless this element is nested in a ConfigBlockCheck, in which case 'block' is used.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="running">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the running configuration.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="saved">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the saved configuration.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="block">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the current block being evaluated.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="CPDCheck">
+        <xs:annotation>
+            <xs:documentation>The contents of this element will be treated as a configuration policy definition (CPD). See the product documentation for details on CPD.
+
+</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+            <xs:attribute name="label" type="xs:positiveInteger">
+                <xs:annotation>
+                    <xs:documentation>Used in combination with the 'expression' attribute to identify each listed expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="object" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Specifies a variable name containing the object on which to act. Defaults to the variable 'input' if not specified. This will only be used if the object is not already known. For example, in the context of evaluating policy rule, the object is normally known and is the device; in the context of a SetFilter, the object is the current member of the set being filtered.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="config-type">
+                <xs:annotation>
+                    <xs:documentation>Indicates whether to operate on the running or saved configuration, or on a block when nested inside a ConfigBlockCheck. By default, the running configuration is used unless this element is nested in a ConfigBlockCheck, in which case 'block' is used.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="running">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the running configuration.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="saved">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the saved configuration.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="block">
+                            <xs:annotation>
+                                <xs:documentation>Operate on the current block being evaluated.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Expr">
+        <xs:annotation>
+            <xs:documentation>The Expr element is used to define expressions when performing logical tests or assignments.
+
+An Expr element may contain other expressions, and may represent its value as a constant, field lookup, or other operation. If no attributes are defined, the Expr contents (the element text) will be used as a String.
+</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+            <xs:sequence maxOccurs="unbounded" minOccurs="0">
+                <xs:group ref="Expression"/>
+            </xs:sequence>
+            <xs:attribute name="expression" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The expression attribute is a shorthand method of creating complex Boolean expressions based upon other elements. The expression attribute may consist of integers, parentheses, ‘and’, ‘or’, ‘if’, ‘then’, and ‘else’. The numbers should refer to direct child elements, which must include label attributes matching the numbers. </xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="label" type="xs:positiveInteger">
+                <xs:annotation>
+                    <xs:documentation>Used in combination with the 'expression' attribute to identify each listed expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="note" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>A comment to describe the expression.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="object" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Specifies a variable name containing the object on which to act. Defaults to the variable 'input' if not specified. This will only be used if the object is not already known. For example, in the context of evaluating policy rule, the object is normally known and is the device; in the context of a SetFilter, the object is the current member of the set being filtered.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="field" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The name of an object attribute, or instance method with no parameters, of the current object. You may chain these calls arbitrarily.  
+
+Valid attributes and instance methods may be found in the API documentation by examining the models defined in the Datatypes page. During policy execution, the default object is an InfraDevice object.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="op">
+                <xs:annotation>
+                    <xs:documentation>Defines the operation that to be evaluated by this expression.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="not">
+                            <xs:annotation>
+                                <xs:documentation>Logical NOT of a single sub-expression.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&amp;&amp;">
+                            <xs:annotation>
+                                <xs:documentation>Logical AND of two or more sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="and">
+                            <xs:annotation>
+                                <xs:documentation>Logical AND of two or more sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="||">
+                            <xs:annotation>
+                                <xs:documentation>Logical OR of two or more sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="or">
+                            <xs:annotation>
+                                <xs:documentation>Logical OR of two or more sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="concat">
+                            <xs:annotation>
+                                <xs:documentation>Concatenation of strings.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="length">
+                            <xs:annotation>
+                                <xs:documentation>If the sub-expression is a string, returns the length of the string. If it is an array, returns the size of the array.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="contains">
+                            <xs:annotation>
+                                <xs:documentation>String containment; returns true if the second sub-expression is contained within the first.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="does-not-contain">
+                            <xs:annotation>
+                                <xs:documentation>String non-containment; returns true if the second sub-expression is not contained within the first.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="matches">
+                            <xs:annotation>
+                                <xs:documentation>Regular expression match of two sub-expressions (the second expression should be the regular expression).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="does-not-match">
+                            <xs:annotation>
+                                <xs:documentation>Regular expression non-match of two sub-expressions (the second expression should be the regular expression).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="=">
+                            <xs:annotation>
+                                <xs:documentation>Equality of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="==">
+                            <xs:annotation>
+                                <xs:documentation>Equality of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="eq">
+                            <xs:annotation>
+                                <xs:documentation>Equality of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="!=">
+                            <xs:annotation>
+                                <xs:documentation>Inequality of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&lt;>">
+                            <xs:annotation>
+                                <xs:documentation>Inequality of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="ne">
+                            <xs:annotation>
+                                <xs:documentation>Inequality of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&lt;">
+                            <xs:annotation>
+                                <xs:documentation>Numerical or case-sensitive lexical less-than of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value=">">
+                            <xs:annotation>
+                                <xs:documentation>Numerical or case-sensitive lexical greater-than of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&lt;=">
+                            <xs:annotation>
+                                <xs:documentation>Numerical or case-sensitive lexical less-than-or-equal-to of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value=">=">
+                            <xs:annotation>
+                                <xs:documentation>Numerical or case-sensitive lexical greater-than-or-equal-to of two sub-expressions.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="+">
+                            <xs:annotation>
+                                <xs:documentation>Addition.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="-">
+                            <xs:annotation>
+                                <xs:documentation>Subtraction.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="*">
+                            <xs:annotation>
+                                <xs:documentation>Multiplication.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="/">
+                            <xs:annotation>
+                                <xs:documentation>Division.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="%">
+                            <xs:annotation>
+                                <xs:documentation>Modulus.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="**">
+                            <xs:annotation>
+                                <xs:documentation>Exponentiation.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="array">
+                            <xs:annotation>
+                                <xs:documentation>Evaluates each sub-expression, and creates an array out of all the values.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="element-at">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the second as an index into the array. The result of the expression is the entry at that index. Indexes start at 0.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="push">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the remaining sub-expressions are appended to the array. This is equivalent to insert-at repeatedly with the array size as the index at which to insert. For example, [1, 2] push 3 becomes [1, 2, 3]; [1, 2] push 3, 4 becomes [1, 2, 3, 4]. The return value is the modified array.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="pop">
+                            <xs:annotation>
+                                <xs:documentation>The sub-expression is evaluated as an array, and this returns the last value in the array while also removing that value from the array.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="unshift">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the remaining sub-expressions are prepended to the array (staying in the listed order). This is equivalent to insert-at repeatedly with 0 as the index at which to insert (but in reverse order). For example: [1,2] unshift 3 results in [3, 1, 2]; [1, 2] unshift 3, 4 becomes [3, 4, 1, 2]. The return value is the modified array.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="shift">
+                            <xs:annotation>
+                                <xs:documentation>The sub-expression is evaluated as an array, and this returns the first value in the array while also removing that value from the array.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="delete-at">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the second as an index into the array. The result of the expression is the value of the element that was deleted. Indexes start at 0.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="insert-at">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the second as an index into the array. The third expression will be evaluated, and inserted into the array at the specified index, pushing the elements at that index and later out by one index. The result of the expression is the modified array. Indexes start at 0.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="assign-at">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the second as an index into the array. The third expression will be evaluated, and inserted into the array at the specified index, replacing the element at that index. The result of the expression is the modified array. Indexes start at 0.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="size">
+                            <xs:annotation>
+                                <xs:documentation>If the sub-expression is a string, returns the length of the string. If it is an array, returns the size of the array.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="join">
+                            <xs:annotation>
+                                <xs:documentation>The first expression is evaluated as an array, and the second as a string. Each element in the array will be converted to a string and concatenated, putting the second parameter between each element.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="bnot">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise NOT (complement).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="~">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise NOT (complement).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&amp;">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise AND.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="band">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise AND.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="|">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise OR.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="bor">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise OR.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="^">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise XOR.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="bxor">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise XOR.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&lt;&lt;">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise left-shift.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="lshift">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise left-shift.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="&gt;&gt;">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise right-shift.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="rshift">
+                            <xs:annotation>
+                                <xs:documentation>Bitwise right-shift.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="defined">
+                            <xs:annotation>
+                                <xs:documentation>Returns true if the current object is not nil, and all of the named attributes and instance methods (i.e., sub-expressions should evaluate to names) are valid attributes or methods for this object.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="in">
+                            <xs:annotation>
+                                <xs:documentation>If the first expression is a field that returns an IP address, or is explicitly given type ‘ip’, then the second operator will be treated as a CIDR range, and this operator will return true if the IP is in the CIDR.
+                                    If the type of the first expression is not ‘ip’, then the second expression will be treated as a comma-delimited string, and split on the commas. This operator will return true if the first expression is in the list generated by splitting the second expression.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="not-in">
+                            <xs:annotation>
+                                <xs:documentation>The logical NOT of the in operator.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="in-group">
+                            <xs:annotation>
+                                <xs:documentation>
+                                    Returns true if the current object matches the group criteria of at least one group whose name is returned by any sub-expression.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="not-in-group">
+                            <xs:annotation>
+                                <xs:documentation>
+                                    Returns true if the current object matches no group listed as a sub-expression.
+                                </xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="type">
+                <xs:annotation>
+                    <xs:documentation>Sets the return type of the expression explicitly. To create a nil expression, use type=’nil’ or type=’null’ (which are equivalent).</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="bool">
+                            <xs:annotation>
+                                <xs:documentation>A Boolean value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="boolean">
+                            <xs:annotation>
+                                <xs:documentation>A Boolean value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="int">
+                            <xs:annotation>
+                                <xs:documentation>An Integer value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="integer">
+                            <xs:annotation>
+                                <xs:documentation>An Integer value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="number">
+                            <xs:annotation>
+                                <xs:documentation>An Integer value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="float">
+                            <xs:annotation>
+                                <xs:documentation>A floating-point number.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="double">
+                            <xs:annotation>
+                                <xs:documentation>A floating-point number.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="decimal">
+                            <xs:annotation>
+                                <xs:documentation>A floating-point number.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="datetime">
+                            <xs:annotation>
+                                <xs:documentation>A (possible relative) datetime value.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="ip">
+                            <xs:annotation>
+                                <xs:documentation>An IP address (IPv4 or IPv6).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="ipaddr">
+                            <xs:annotation>
+                                <xs:documentation>An IP address (IPv4 or IPv6).</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="nil">
+                            <xs:annotation>
+                                <xs:documentation>The expression has no value, and therefore no type.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="null">
+                            <xs:annotation>
+                                <xs:documentation>The expression has no value, and therefore no type.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="value" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Used to set the Expr value to a constant. When using this, it may be necessary to specify the type attribute as well. For example, if the value is 'true', this will by default be the String 'true'. To represent the actually Boolean true, you must specify type as 'boolean'.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="variable" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The value of the Expr will be the value of the named variable.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="method" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The name of a method to call on the current object. The arguments to the method will include: the values of attributes other than valid Expr attributes (which are omitted) in the order defined, followed by the values of any sub-expressions, in the order listed.
+
+Note that there are very few methods currently available that require parameters.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:anyAttribute namespace="##local" processContents="lax"/>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="Map">
+        <xs:annotation>
+            <xs:documentation>A Map allows you to iterate over an array, and return another array based upon the result of the Do block for each object. This is similar to a ForEach loop, except that the return value is an array rather than a single value.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:group ref="Expression"/>
+                <xs:element name="Do" type="StatementList"/>
+            </xs:sequence>
+            <xs:attribute name="variable" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>By default, a variable named _loop_value is set to the current value of the array over which the Map is iterating. This attribute may be set to change the name of the variable to be used for this purpose.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="StatementBlock">
+        <xs:annotation>
+            <xs:documentation>This element simply allows grouping of related statements</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="StatementList">
+                    <xs:attribute name="output" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="PolicyRuleLogic">
+        <xs:annotation>
+            <xs:documentation>Serves as the root element for all policy rules. This element can be thought of as a statement block, with its child elements representing statements. Each statement has a result value; the result value of the PolicyRuleLogic statement block is either the value of an executed Return statement, or the value of the last executed statement in the block.
+
+The value returned by a PolicyRuleLogic element must be either a PolicyRulePass or PolicyRuleFail element.
+
+</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:complexContent>
+                <xs:extension base="StatementList">
+                    <xs:attribute name="expression" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>The expression attribute is a shorthand method of creating complex Boolean expressions based upon other elements. The expression attribute may consist of integers, parentheses, ‘and’, ‘or’, ‘if’, ‘then’, and ‘else’. The numbers should refer to direct child elements, which must include label attributes matching the numbers. </xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="editor" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>Identifies which of the user-interface Policy Rule editors should be used to edit this rule. Generally this should not be specifically set when creating XML rules outside of those editors. If it is set, it should be set to 'raw-xml'. If set to anything else, accessing the rule within the user interface may modify or clear the rule logic.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                    <xs:attribute name="output" type="xs:string">
+                        <xs:annotation>
+                            <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                        </xs:annotation>
+                    </xs:attribute>
+                </xs:extension>
+            </xs:complexContent>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="PolicyRulePass">
+        <xs:annotation>
+            <xs:documentation>Indicates that the device meets the policy rule being evaluated. You may include a success message as text content, or an expression which will be evaluated and used as the message.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+            <xs:group ref="Expression" minOccurs="0"/>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="PolicyRuleFail">
+        <xs:annotation>
+            <xs:documentation>Indicates that the device does not meet the policy rule being evaluated. You may include a failure message as text content, or an expression which will be evaluated and used as the message.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType mixed="true">
+            <xs:group ref="Expression" minOccurs="0">
+                <xs:annotation>
+                    <xs:documentation>The result of this expression will be used as the policy rule failure message.</xs:documentation>
+                </xs:annotation>
+            </xs:group>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="PolicyRuleCall">
+        <xs:annotation>
+            <xs:documentation>Evaluates the named policy rule against the specified object and returns the result of that rule. This enables rules to include other rules. The filter from the called rule will NOT be applied.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:attribute name="short-name" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>The short name of the policy rule to execute.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="object" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>Specifies a variable name containing the object on which to act. Defaults to the variable 'input' if not specified. This will only be used if the object is not already known. For example, in the context of evaluating policy rule, the object is normally known and is the device; in the context of a SetFilter, the object is the current member of the set being filtered.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="If">
+        <xs:annotation>
+            <xs:documentation>Provides conditional logic. Must contain an initial expression that will be evaulated; if it is true, the Then child element will be evaluated. If it is false, the first child ElseIf or Else element will be evaluated.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:sequence>
+                <xs:group ref="Expression">
+                    <xs:annotation>
+                        <xs:documentation>The conditional expression used to determine which branch to take.</xs:documentation>
+                    </xs:annotation>
+                </xs:group>
+                <xs:element name="Then">
+                    <xs:annotation>
+                        <xs:documentation>The statements in this element will be evaluated if the conditional expression for the If evaluates to true.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="StatementList">
+                                <xs:attribute name="output" type="xs:string">
+                                    <xs:annotation>
+                                        <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="ElseIf" maxOccurs="unbounded" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>If the preceding If or ElseIf statement's expression evaluates to false, then the expression of the next ElseIf is checked. If that expression evaluates to true, the contents of the Then child will be evaluated.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:sequence>
+                            <xs:group ref="Expression"/>
+                            <xs:element name="Then" type="StatementList"/>
+                        </xs:sequence>
+                    </xs:complexType>
+                </xs:element>
+                <xs:element name="Else" minOccurs="0">
+                    <xs:annotation>
+                        <xs:documentation>If the preceding If or ElseIf statement's expression evaluates to false, the contents of the Else child will be evaluated.</xs:documentation>
+                    </xs:annotation>
+                    <xs:complexType>
+                        <xs:complexContent>
+                            <xs:extension base="StatementList">
+                                <xs:attribute name="output" type="xs:string">
+                                    <xs:annotation>
+                                        <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                                    </xs:annotation>
+                                </xs:attribute>
+                            </xs:extension>
+                        </xs:complexContent>
+                    </xs:complexType>
+                </xs:element>
+            </xs:sequence>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+    <xs:element name="ListSearch">
+        <xs:annotation>
+            <xs:documentation>Looks up one or more rows in a list. The return value of this element is the number of matching rows.</xs:documentation>
+        </xs:annotation>
+        <xs:complexType>
+            <xs:group ref="Expression" minOccurs="1" maxOccurs="unbounded"/>
+            <xs:attribute name="list-name" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>The name of the list to search.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="search-columns" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>A delimited list of column names to search.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="result-columns" type="xs:string" use="required">
+                <xs:annotation>
+                    <xs:documentation>A delimited list of result column names. For each column listed, a variable with that name will be assigned the value of the column in the looked up row or rows.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="delimiter" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>The delimiter for the search-columns and result-columns attributes. The default is a comma.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+            <xs:attribute name="result-mode">
+                <xs:annotation>
+                    <xs:documentation>If 'all', then each variable will contain a an array of column values for each matching row. Otherwise, only the first value will be stored.</xs:documentation>
+                </xs:annotation>
+                <xs:simpleType>
+                    <xs:restriction base="xs:string">
+                        <xs:enumeration value="first">
+                            <xs:annotation>
+                                <xs:documentation>Return the first row.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                        <xs:enumeration value="all">
+                            <xs:annotation>
+                                <xs:documentation>Return all rows.</xs:documentation>
+                            </xs:annotation>
+                        </xs:enumeration>
+                    </xs:restriction>
+                </xs:simpleType>
+            </xs:attribute>
+            <xs:attribute name="output" type="xs:string">
+                <xs:annotation>
+                    <xs:documentation>May contain the name of a variable in which to store the result of the element evaluation.</xs:documentation>
+                </xs:annotation>
+            </xs:attribute>
+        </xs:complexType>
+    </xs:element>
+</xs:schema>

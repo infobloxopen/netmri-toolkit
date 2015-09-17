@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>Lou</author>
+  <created-at type="datetime">2014-11-21 07:27:18</created-at>
+  <description>This is not a functional rule, it describes use of List</description>
+  <name>1 Ex XML List</name>
+  <read-only type="boolean">false</read-only>
+  <remediation></remediation>
+  <severity>error</severity>
+  <short-name>1 Ex List</short-name>
+  <updated-at type="datetime">2014-11-21 07:36:26</updated-at>
+<PolicyRuleLogic editor='raw-xml' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <!--
+  List Searches 
+You may now access list values from within a policy rule. This allows for better integration of policies and scripting, for example. It also enables you to manage a single list and not have a proliferation of similar rules. A basic list search looks like this:
+ 
+<ListSearch list-name="list-name" search-columns="search1, search2, ..." result-columns="result1,result2, ..." >
+  expression for search1
+  expression for search2
+  ...
+</ListSearch>
+ 
+where list-name is the name of the list shown on the Lists page, and search1, search2, ... is a comma-delimited list of column names to search, and result1,result2, ... is a comma-delimited list of result columns to retrieve. (Note that you may use the delimiter attribute to change the comma to another character, if your column name(s) contain commas). The system will evaluate each of the expressions, and match them with the search columns, in the order defined. Then, variables will be created, named for the result columns, containing the values found in those columns. By default, the first matching row is returned; you may use the result-mode attribute (set to all) to instead retrieve all matching rows. In that case, the variables will contain arrays of the values, one entry per row.
+ 
+For example, consider the following scenario: 
+
+
+- We have a policy that device names must begin with the three letter site code, followed by a "-".
+- Define a list "Site Details" with two columns: "Site Code" and "Location". Enter values:
+
+Site Code  |  Location 
+
+dca        |  Washington, DC 
+iad        |  Herndon, VA 
+sjc        |  San Jose, CA 
+
+Define the rule below. Here, the site code is parsed from the device name, and is used to look up the "Location". This is then used to check that the SNMP location ends with that city name.
+
+       -->
+  <If>
+    <Expr op='matches'>
+      <Expr field='DeviceName'/>
+      <Expr value='^([a-z]{3})-'/>
+    </Expr>
+    <Then>
+      <!--
+          The device name appears to be the correct format, so let's look up the location via the parsed site code.
+          Here, we rely on the fact that the return value of the ListSearch is the count of the matching rows, and that 0 is considered false.
+          The ListSearch will be evaluated first; if no result is returned, the ConfigFileCheck will not be executed due to the short-circuiting of
+          the boolean Expr. If a result is returned, the ListSearch call will set a variable named "Location" containing the result of the first match to "Site Code".
+
+          Then, we do a ConfigFileCheck to see if the config file contains exactly one line that starts with "snmp-server location"
+          and ends with the location. To do this, we have to construct a result expression using the Location variable.
+
+          We could have constructed a more descriptive message for the PolicyRuleFail, that includes the current site code and location, as
+          well as the intended location, but did not for simplicity here.
+       -->
+      <If>
+        <Expr op='and'>
+          <ListSearch list-name='Site Details' result-columns='Location' search-columns='Site Code'>
+            <Expr variable='_match_1'/>
+          </ListSearch>
+          <ConfigFileCheck op='contains-one'>
+            <Expr op='concat'>
+              <Expr value='^snmp-server location .*'/>
+              <Expr variable='Location'/>
+            </Expr>
+          </ConfigFileCheck>
+        </Expr>
+        <Then>
+          <PolicyRulePass/>
+        </Then>
+        <Else>
+          <PolicyRuleFail>The incorrect location, or none at all, is configured.</PolicyRuleFail>
+        </Else>
+      </If>
+    </Then>
+    <Else>
+      <!--
+          The device name did not match the correct format, so fail the rule.
+       -->
+      <PolicyRuleFail>The device name does not begin with the three-letter site code.</PolicyRuleFail>
+    </Else>
+  </If>
+</PolicyRuleLogic>  <NetmriVersion>6.9.3.79467</NetmriVersion>
+</policy-rule>

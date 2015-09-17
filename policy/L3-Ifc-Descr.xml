@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>jbelamaric</author>
+  <created-at type="datetime">2014-07-11 18:14:49</created-at>
+  <description>All L3 interfaces that are not shutdown must have a description configured.</description>
+  <name>1 Ex XML Block - Ensure Up L3 Interfaces Have a Description</name>
+  <read-only type="boolean">false</read-only>
+  <remediation>Add a description to the interfaces.</remediation>
+  <severity>error</severity>
+  <short-name>L3-Ifc-Descr</short-name>
+  <updated-at type="datetime">2015-06-19 09:48:18</updated-at>
+<PolicyRuleLogic editor='raw-xml' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <Expr op='array' output='good-ifcs'/>
+  <Expr op='array' output='bad-ifcs'/>
+  <ConfigBlockCheck block-start='^interface (.*)$' boundary-method='indent'>
+    <If>
+      <!-- Must have an IP and not be shutdown -->
+      <Expr expression='1 and 2'>
+        <Expr label='1' op='matches'>
+          <Expr variable='_block'/>
+          <Expr value='^\s*ip(v6)? address'/>
+        </Expr>
+        <Expr label='2' op='does-not-match'>
+          <Expr variable='_block'/>
+          <Expr value='^\s*shutdown'/>
+        </Expr>
+      </Expr>
+      <Then>
+        <If>
+          <!-- In the context of ConfigBlockCheck, the ConfigFileCheck will search
+             only the block, not the entire file by default. -->
+          <ConfigFileCheck op='contains-all'>\s*description .+</ConfigFileCheck>
+          <Then>
+            <Expr op='push'>
+              <Expr variable='good-ifcs'/>
+              <Expr variable='_start_match_1'/>
+            </Expr>
+          </Then>
+          <Else>
+            <Expr op='push'>
+              <Expr variable='bad-ifcs'/>
+              <!-- Say which line number it is on -->
+              <Expr op='concat'>
+                <Expr variable='_start_match_1'/>
+                <Expr value=' (line '/>
+                <Expr variable='_block_lineno'/>
+                <Expr value=')'/>
+              </Expr>
+            </Expr>
+          </Else>
+        </If>
+      </Then>
+      <!-- "else" here would mean it's an L2 interface or a shutdown L3 interface -->
+    </If>
+  </ConfigBlockCheck>
+  <If>
+    <!-- 0 is false, more than 0 is true -->
+    <Expr op='size'>
+      <Expr variable='bad-ifcs'/>
+    </Expr>
+    <Then>
+      <PolicyRuleFail>
+        <Expr op='concat'>
+          <Expr value='The following L3 interfaces are missing descriptions: '/>
+          <Expr op='join'>
+            <Expr variable='bad-ifcs'/>
+            <Expr value=', '/>
+          </Expr>
+          <Expr value='.'/>
+        </Expr>
+      </PolicyRuleFail>
+    </Then>
+    <Else>
+      <PolicyRulePass>
+        <Expr op='concat'>
+          <Expr value='All up L3 interfaces have descriptions: '/>
+          <Expr op='join'>
+            <Expr variable='good-ifcs'/>
+            <Expr value=', '/>
+          </Expr>
+          <Expr value='.'/>
+        </Expr>
+      </PolicyRulePass>
+    </Else>
+  </If>
+</PolicyRuleLogic><SetFilter editor='logic-builder' expression='1' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<Expr label='1' note='' op='='><Expr field='devicevendor'/><Expr value='Cisco'/></Expr>
+
+</SetFilter>  <NetmriVersion>6.9.3.79467</NetmriVersion>
+</policy-rule>
