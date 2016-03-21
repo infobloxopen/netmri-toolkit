@@ -13,22 +13,21 @@ args = parser.parse_args()
 
 print("Searching for subnets in %s." % args.cidr)
 
-url = os.environ['NETMRI_API_URL']
+host = os.environ['NETMRI_HOST']
 user = os.environ['NETMRI_USER']
 password = os.environ['NETMRI_PASSWORD']
-sslverify = os.environ.get('NETMRI_SSLVERIFY')
+use_ssl = os.environ['NETMRI_USE_SSL']
+api_version = os.environ['NETMRI_API_VERSION']
+ssl_verify = os.environ.get('NETMRI_SSL_VERIFY')
 
-if sslverify is not None and sslverify.lower() == "false":
-    sslverify = False
-else:
-    sslverify = True
-
-c = infoblox_netmri.InfobloxNetMRI({
-    'url': url,
-    'username': user,
-    'password': password,
-    'sslverify': sslverify
-})
+c = infoblox_netmri.InfobloxNetMRI(
+    host=host,
+    username=user,
+    password=password,
+    api_version=api_version,
+    use_ssl=use_ssl,
+    ssl_verify=ssl_verify
+)
 
 net = netaddr.IPNetwork(args.cidr)
 range = "%s,%s" % (long(net.network), long(net.broadcast))
