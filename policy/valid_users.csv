@@ -1,0 +1,10 @@
+###################################
+# Name:        Valid Users
+# Description: List the users that are valid and required or optional.
+###################################
+
+"Username","Category"
+"john","Optional"
+"netmri","Required"
+"devgroup","Required"
+"bobo","Required"

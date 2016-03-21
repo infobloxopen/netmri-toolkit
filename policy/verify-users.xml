@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>Sif Baksh, John Belamaric</author>
+  <created-at type="datetime">2015-12-18 13:19:31</created-at>
+  <description>Verifies the locally defined users against a list of users that MUST or MAY be present.</description>
+  <name>Verify Users</name>
+  <read-only type="boolean">false</read-only>
+  <remediation nil="true"></remediation>
+  <severity>error</severity>
+  <short-name>verify-users</short-name>
+  <updated-at type="datetime">2016-03-21 11:15:11</updated-at>
+<PolicyRuleLogic editor='raw-xml' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <Expr output='newline'>
+</Expr>
+  <!-- First check for missing users -->
+  <Expr op='array' output='missing_user'/>
+  <ListSearch list-name='Valid Users' result-columns='Username' result-mode='all' search-columns='Category'>
+    <Expr value='Required'/>
+  </ListSearch>
+  <ForEach>
+    <Expr variable='Username'/>
+    <Do>
+      <If>
+        <ConfigFileCheck op='contains-all'>
+          <Expr op='concat'>
+            <Expr value='^username '/>
+            <Expr variable='_loop_value'/>
+            <Expr value='\s'/>
+          </Expr>
+        </ConfigFileCheck>
+        <Then/>
+        <Else>
+          <Expr op='push'>
+            <Expr variable='missing_user'/>
+            <Expr variable='_loop_value'/>
+          </Expr>
+        </Else>
+      </If>
+    </Do>
+  </ForEach>
+  <!-- Next, check for invalid users -->
+  <Expr op='array' output='invalid_user'/>
+  <ConfigBlockCheck block-start='^username (\w*)' boundary-method='line-count' line-count='1'>
+    <If>
+      <Expr op='or'>
+        <ListSearch list-name='Valid Users' result-columns='Username' search-columns='Username,Category'>
+          <Expr variable='_start_match_1'/>
+          <Expr value='Required'/>
+        </ListSearch>
+        <ListSearch list-name='Valid Users' result-columns='Username' search-columns='Username,Category'>
+          <Expr variable='_start_match_1'/>
+          <Expr value='Optional'/>
+        </ListSearch>
+      </Expr>
+      <Then>
+
+      </Then>
+      <Else>
+        <Expr op='push'>
+          <Expr variable='invalid_user'/>
+          <Expr variable='_start_match_1'/>
+        </Expr>
+      </Else>
+    </If>
+  </ConfigBlockCheck>
+  <!-- Check if we pass or fail -->
+  <If>
+    <!-- 0 is false, more than 0 is true -->
+    <Expr op='or'>
+      <Expr op='size'>
+        <Expr variable='missing_user'/>
+      </Expr>
+      <Expr op='size'>
+        <Expr variable='invalid_user'/>
+      </Expr>
+    </Expr>
+    <Then>
+      <!-- At least one of the checks failed, so build a failure message -->
+      <Expr op='concat' output='message'>
+        <Expr value='The configuration does not pass the user check.'/>
+        <Expr variable='newline'/>
+      </Expr>
+      <!-- Check if the issue was 1 or more missing users, and add a sentence
+		     if that is the case -->
+      <If>
+        <Expr op='='>
+          <Expr op='size'>
+            <Expr variable='missing_user'/>
+          </Expr>
+          <Expr value='1'/>
+        </Expr>
+        <Then>
+          <Expr op='concat' output='message'>
+            <Expr variable='message'/>
+            <Expr value='The following user is missing: '/>
+            <Expr op='pop'>
+              <Expr variable='missing_user'/>
+            </Expr>
+            <Expr value='. '/>
+            <Expr variable='newline'/>
+          </Expr>
+        </Then>
+        <ElseIf>
+          <Expr op='size'>
+            <Expr variable='missing_user'/>
+          </Expr>
+          <Then>
+            <Expr op='concat' output='message'>
+              <Expr variable='message'/>
+              <Expr value='The following users are missing: '/>
+              <Expr op='join'>
+                <Expr variable='missing_user'/>
+                <Expr value=', '/>
+              </Expr>
+              <Expr value='. '/>
+              <Expr variable='newline'/>
+            </Expr>
+          </Then>
+        </ElseIf>
+      </If>
+      <!-- Check if the issue was 1 or more invalid users, and add a sentence
+		     if that is the case -->
+      <If>
+        <Expr op='='>
+          <Expr op='size'>
+            <Expr variable='invalid_user'/>
+          </Expr>
+          <Expr value='1'/>
+        </Expr>
+        <Then>
+          <Expr op='concat' output='message'>
+            <Expr variable='message'/>
+            <Expr value='The following invalid user is present in the configuration: '/>
+            <Expr op='pop'>
+              <Expr variable='invalid_user'/>
+            </Expr>
+            <Expr value='. '/>
+            <Expr variable='newline'/>
+          </Expr>
+        </Then>
+        <ElseIf>
+          <Expr op='size'>
+            <Expr variable='invalid_user'/>
+          </Expr>
+          <Then>
+            <Expr op='concat' output='message'>
+              <Expr variable='message'/>
+              <Expr value='The following invalid users are present in the configuration: '/>
+              <Expr op='join'>
+                <Expr variable='invalid_user'/>
+                <Expr value=', '/>
+              </Expr>
+              <Expr value='. '/>
+              <Expr variable='newline'/>
+            </Expr>
+          </Then>
+        </ElseIf>
+      </If>
+      <PolicyRuleFail>
+        <Expr variable='message'/>
+      </PolicyRuleFail>
+    </Then>
+    <Else>
+      <PolicyRulePass>All users are correct.</PolicyRulePass>
+    </Else>
+  </If>
+</PolicyRuleLogic>  <NetmriVersion>7.0.3.82458</NetmriVersion>
+</policy-rule>
