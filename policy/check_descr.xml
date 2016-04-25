@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>Erik Peeters</author>
+  <created-at type="datetime">2016-04-21 06:24:06</created-at>
+  <description>Check if an interface that is not administratively down has a description with double quotes</description>
+  <name>Check Description</name>
+  <read-only type="boolean">false</read-only>
+  <remediation>Add a descritption</remediation>
+  <severity>error</severity>
+  <short-name>check_descr</short-name>
+  <updated-at type="datetime">2016-04-21 06:31:45</updated-at>
+<PolicyRuleLogic editor='raw-xml' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <Expr op='array' output='good-ifcs'/>
+  <Expr op='array' output='bad-ifcs'/>
+  <ConfigBlockCheck block-start='^interface (.*)$' boundary-method='indent'>
+    <If>
+      <!-- Must have a description or shutdown -->
+      <Expr expression='1 or 2'>
+        <Expr label='1' op='matches'>
+          <Expr variable='_block'/>
+          <Expr value='^\sshutdown'/>
+        </Expr>
+        <Expr label='2' op='matches'>
+          <Expr variable='_block'/>
+          <Expr value='^\sdescription \&quot;.*\&quot;'/>
+        </Expr>
+      </Expr>
+      <Then>
+        <Expr op='push'>
+          <Expr variable='good-ifcs'/>
+          <Expr variable='_start_match_1'/>
+        </Expr>
+      </Then>
+      <Else>
+        <Expr op='push'>
+          <Expr variable='bad-ifcs'/>
+          <!-- Say which line number it is on -->
+          <Expr op='concat'>
+            <Expr variable='_start_match_1'/>
+            <Expr value=' (line '/>
+            <Expr variable='_block_lineno'/>
+            <Expr value=')'/>
+          </Expr>
+        </Expr>
+      </Else>
+    </If>
+  </ConfigBlockCheck>
+  <If>
+    <!-- 0 is false, more than 0 is true -->
+    <Expr op='size'>
+      <Expr variable='bad-ifcs'/>
+    </Expr>
+    <Then>
+      <PolicyRuleFail>
+        <Expr op='concat'>
+          <Expr value='The following Switch Port interfaces are up and do not have a description: '/>
+          <Expr op='join'>
+            <Expr variable='bad-ifcs'/>
+            <Expr value=', '/>
+            <Expr/>
+          </Expr>
+          <Expr value='.'/>
+        </Expr>
+      </PolicyRuleFail>
+    </Then>
+    <Else>
+      <PolicyRulePass>
+        <Expr op='concat'>
+          <Expr value='All the Switch Ports are configured correctly'/>
+        </Expr>
+      </PolicyRulePass>
+    </Else>
+  </If>
+</PolicyRuleLogic>  <NetmriVersion>7.0.5.83982</NetmriVersion>
+</policy-rule>
