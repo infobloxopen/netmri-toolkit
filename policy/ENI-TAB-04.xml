@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>astjean</author>
+  <created-at type="datetime">2017-11-01 19:25:54</created-at>
+  <description>Check that any interface that is operationally down is also admin down.</description>
+  <name>1 4 ENI TAB Interface Up Down</name>
+  <read-only type="boolean">false</read-only>
+  <remediation>If an interface is operationally down, set it to admin down.</remediation>
+  <severity>error</severity>
+  <short-name>ENI-TAB-04</short-name>
+  <updated-at type="datetime">2017-11-23 15:39:39</updated-at>
+<PolicyRuleLogic editor='raw-xml' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <!-- Set some variables we'll use later. -->
+  <!-- Handy trick for storing a carriage return in a variable. We use this later for making
+  rule results more readable. -->
+  <Expr output='newline'>
+</Expr>
+  <Expr output='fail-count' value='0'/>
+  <Expr op='array' output='interface_names'/>
+  <!-- Loop through all the interfaces of a device. -->
+  <ForEach>
+    <!-- Use an API call to get the device's interfaces. 'field' would work in the expression, too, but interfaces
+    is an API method so I use the 'method' attribute to remind me of that fact.
+	An XML rule is handed the InfraDevice object for the device it is currently testing. Look up that
+    object in the API documentation to find out what fields and methods are available to the XML rule. -->
+    <Expr method='interfaces'/>
+    <Do>
+      <!-- We're only interested in Oper down interfaces that belong to certain interface types. -->
+      <If>
+        <Expr op='and'>
+          <Expr op='eq'>
+            <!--  _loop_value is a built-in variable NetMRI sets up in a ForEach loop. It will contain whatever is
+          returned by the expression between ForEach and Do. In this case, we're looping through a list
+          of interface objects. -->
+            <Expr field='ifOperStatus' object='_loop_value'/>
+            <Expr value='down'/>
+          </Expr>
+          <Expr op='in'>
+            <!-- _loop_value contains and interface object and we're retrieving the ifType field from that object.
+          Use the API documentation to discover what fields are available for any particular object. -->
+            <Expr field='ifType' object='_loop_value'/>
+            <Expr value='ethernet-csmacd,propPointToPointSerial'/>
+          </Expr>
+        </Expr>
+        <Then>
+          <!-- Oper down interfaces should also be admin down. -->
+          <If>
+            <Expr op='eq'>
+              <Expr field='ifAdminStatus' object='_loop_value'/>
+              <Expr value='up'/>
+            </Expr>
+            <Then>
+              <!-- Interface is admin up. That's not good. -->
+              <!-- Increment our fail-count variable. -->
+              <Assign variable='fail-count'>
+                <Expr op='+'>
+                  <Expr variable='fail-count'/>
+                  <Expr value='1'/>
+                </Expr>
+              </Assign>
+              <!-- Build a list of failed interface names. We'll print these out later. -->
+              <Expr op='push'>
+                <Expr variable='interface_names'/>
+                <Expr field='ifName' object='_loop_value'/>
+              </Expr>
+            </Then>
+          </If>
+        </Then>
+      </If>
+    </Do>
+  </ForEach>
+  <!-- If the rule fails, list the interfaces it failed on. -->
+  <If>
+    <!-- fail-count is initially set to 0. If all interfaces pass this rule, then fail-count should still be 0,
+  this If statement will evaluate to false and we'll drop down to the Else tag. Otherwise, we have failed
+  interfaces to report. -->
+    <Expr variable='fail-count'/>
+    <Then>
+      <PolicyRuleFail>
+        <Expr op='concat'>
+          <Expr value='Interfaces that are oper down but admin up: '/>
+          <!-- Let people know how many interfaces failed. Maybe it's a long list. -->
+          <Expr variable='fail-count'/>
+          <Expr variable='newline'/>
+          <!-- Print the list of failed interfaces, one interface per line. -->
+          <Expr op='join'>
+            <Expr variable='interface_names'/>
+            <Expr variable='newline'/>
+          </Expr>
+        </Expr>
+      </PolicyRuleFail>
+    </Then>
+    <Else>
+      <!-- Put something here just to let people know NetMRI really did test the device with this rule. -->
+      <PolicyRulePass>All oper down interfaces are admin down</PolicyRulePass>
+    </Else>
+  </If>
+</PolicyRuleLogic><SetFilter editor='logic-builder' expression='1' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<Expr label='1' note='Vendor = Cisco' op='='><Expr field='devicevendor'/><Expr value='Cisco'/></Expr>
+
+</SetFilter>  <NetmriVersion>7.2.1.87960</NetmriVersion>
+</policy-rule>
