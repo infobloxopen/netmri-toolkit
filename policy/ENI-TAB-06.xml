@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>astjean</author>
+  <created-at type="datetime">2017-11-02 15:14:50</created-at>
+  <description>Pulls NTP servers from a list object according to the location code found in the device hostname. The rule checks that all NTP servers retrieved from the list are in the device config and that there are no extra NTP servers in the config.</description>
+  <name>1 6 ENI TAB NTP Servers from List</name>
+  <read-only type="boolean">false</read-only>
+  <remediation>Add required and remove invalid NTP servers.</remediation>
+  <severity>error</severity>
+  <short-name>ENI-TAB-06</short-name>
+  <updated-at type="datetime">2017-11-23 15:39:59</updated-at>
+<PolicyRuleLogic editor='raw-xml' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <!-- Declare variables we'll use later. -->
+  <!-- Handy trick for storing a carriage return in a variable. We use this later for making
+  rule results more readable. -->
+  <Expr output='newline'>
+</Expr>
+  <Expr output='fail' value='0'/>
+  <Expr op='array' output='missing-servers'/>
+  <Expr op='array' output='extra-servers'/>
+  <!-- Pull the list of correct NTP servers from a list object. -->
+  <Expr op='matches'>
+    <!-- Grabbing the hostname of the device using an API call. Look up the InfraDevice object in the
+  API documentation to find what fields are available to XML rules. -->
+    <Expr field='DeviceName'/>
+    <!-- Regex pattern that matches the first 3 characters of the device's hostname. Parentheses mean we're
+    capturing the 3 characters into a variable. -->
+    <Expr value='^([a-zA-Z]{3,3})'/>
+  </Expr>
+  <!-- ListSearch is used to retrieve values from a List object in NetMRI. Define Lists on the Lists tab under
+  Job Management in the NetMRI GUI. -->
+  <!-- result-mode of 'all' means we could get multiple values returned as an array. All results are placed
+  in a variable with the name of the result column. In this case the variable will be called 'NTP Server'. -->
+  <ListSearch list-name='NTP Servers by Location' result-columns='NTP Server' result-mode='all' search-columns='Location Code'>
+    <!--  _match_1 is a built-in variable NetMRI sets up when capturing values in a regex pattern. If you capture
+  more than one string in a pattern, the number in the variable name increments: _match_1, _match_2, etc.
+  In this case, _match_1 is coming from our DeviceName match operation above. -->
+    <Expr variable='_match_1'/>
+  </ListSearch>
+  <!-- Check if the device has any extra NTP servers configured. -->
+  <!-- We're using ConfigBlockCheck to find all the ntp server lines in the config. -->
+  <ConfigBlockCheck block-start='^ntp server ' boundary-method='line-count' line-count='1'>
+    <Expr op='matches'>
+      <!-- _block is a built-in variable NetMRI sets up when ConfigBlockCheck finds a match in the device's
+    config file. In this instance, it should contain one ntp server line. -->
+      <Expr variable='_block'/>
+      <!-- Grab the IP address of the ntp server we found in the config file. -->
+      <Expr value='^ntp server (\S+)'/>
+    </Expr>
+    <!-- If the IP address we found in the config file isn't in our array of approved NTP servers,
+    that's a problem. -->
+    <If>
+      <Expr op='not-in'>
+        <Expr variable='_match_1'/>
+        <Expr variable='NTP Server'/>
+      </Expr>
+      <Then>
+        <Assign variable='fail'>
+          <Expr op='+'>
+            <Expr variable='fail'/>
+            <Expr value='1'/>
+          </Expr>
+        </Assign>
+        <!-- Build a list of extra NTP server lines. We'll print these out later. -->
+        <Expr op='push'>
+          <Expr variable='extra-servers'/>
+          <Expr variable='_match_1'/>
+        </Expr>
+      </Then>
+    </If>
+  </ConfigBlockCheck>
+  <!-- Check that all the proper NTP servers are present on the device. -->
+  <ForEach>
+    <!-- Using ForEach to loop through however many NTP servers were returned by our ListSearch tag. -->
+    <Expr variable='NTP Server'/>
+    <Do>
+      <If>
+        <ConfigFileCheck op='does-not-contain-any'>
+          <!-- Build proper NTP server config lines from the IP addresses in the NTP Server variable and test
+        them against the device config. -->
+          <Expr op='concat'>
+            <Expr value='ntp server '/>
+            <!-- _loop_value contains one IP address retrieved from the 'NTP Server' variable. -->
+            <Expr variable='_loop_value'/>
+          </Expr>
+        </ConfigFileCheck>
+        <Then>
+          <Assign variable='fail'>
+            <Expr op='+'>
+              <Expr variable='fail'/>
+              <Expr value='1'/>
+            </Expr>
+          </Assign>
+          <!-- Build a list of missing NTP sever lines. We'll print these out later. -->
+          <Expr op='push'>
+            <Expr variable='missing-servers'/>
+            <Expr variable='_loop_value'/>
+          </Expr>
+        </Then>
+      </If>
+    </Do>
+  </ForEach>
+  <!-- Return our results. -->
+  <If>
+    <!-- fail is initially set to 0. If all tests pass, then fail should still be 0, this If statement
+  will evaluate to false and we'll drop down to the Else tag. Otherwise, we have missing or extra NTP servers
+  to report. -->
+    <Expr variable='fail'/>
+    <Then>
+      <Return>
+        <PolicyRuleFail>
+          <Expr op='concat'>
+            <Expr value='Extra NTP servers: '/>
+            <Expr op='join'>
+              <Expr variable='extra-servers'/>
+              <Expr value=', '/>
+            </Expr>
+            <Expr variable='newline'/>
+            <Expr variable='newline'/>
+            <Expr value='Missing NTP servers: '/>
+            <Expr op='join'>
+              <Expr variable='missing-servers'/>
+              <Expr value=', '/>
+            </Expr>
+          </Expr>
+        </PolicyRuleFail>
+      </Return>
+    </Then>
+    <Else>
+      <!-- Put something here just to let people know NetMRI really did test the device with this rule. -->
+      <PolicyRulePass>Correct NTP servers are configured</PolicyRulePass>
+    </Else>
+  </If>
+</PolicyRuleLogic><SetFilter editor='logic-builder' expression='1' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<Expr label='1' note='Vendor = Cisco' op='='><Expr field='devicevendor'/><Expr value='Cisco'/></Expr>
+
+</SetFilter>  <NetmriVersion>7.2.1.87960</NetmriVersion>
+</policy-rule>
