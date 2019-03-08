@@ -1,0 +1,80 @@
+###########################################################################
+## Export of Script: Sif - Check MLT Issue
+## Script-Level: 3
+## Script-Category:
+## Script-Language: CCS
+## Note: This script contains an Issue which has to to exist before you can import this script
+###########################################################################
+
+Script:
+	Sif - Check MLT Issue
+
+Script-Filter:
+#$Vendor eq "Cisco" and $Type in ["Switch","Switch-Router"] and $sysDescr like /IOS/
+	True
+
+################
+Action:
+	Find Interfaces
+
+Action-Commands:
+	sho run | match mlt
+	SET: $fireissue = "no"
+
+Output-Triggers:
+	Process Interfaces
+
+################
+Trigger:
+	Process Interfaces
+
+Trigger-Description:
+	Find valid interfaces to check.
+
+Trigger-Variables:
+	$testport string
+
+Trigger-Template:
+	mlt 1 name .+ enable member [[$testport]]
+
+Trigger-Commands:
+	sho interfaces $testport
+
+Output-Triggers:
+	ParseOutput
+################
+Trigger:
+	ParseOutput
+
+Trigger-Variables:
+	$testportstatus /\w+/
+
+Trigger-Template:
+	\d\/\d{2} 1     [[$testportstatus]]
+
+Trigger-Commands:{$testportstatus like /Enable/}
+	SET: $fireissue = "no"
+
+
+Trigger-Commands:{$testportstatus not like /Enable/}
+	SET: $fireissue = "yes"
+
+Output-Triggers:
+	IssuseonPort
+#######################################################################
+
+Issue:
+	IssuseonPort
+Issue-ID:
+    AA_Port_Security
+
+Issue-Severity:
+    Error
+
+Issue-Filter:
+    $fireissue eq "yes"
+
+Issue-Details:
+    DeviceIP $IPAddress
+    DeviceName $Name
+    Port $testportstatus
