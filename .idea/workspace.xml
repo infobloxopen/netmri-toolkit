@@ -1,11 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="d875bcbe-7709-4e0d-8481-e0aa63cbb78e" name="Default Changelist" comment="">
-      <change afterPath="$PROJECT_DIR$/CCS/ExampleCCS/Check MLT Issue" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/CCS/ExampleCCS/Remove and Add SNMP RO_RW community String" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/python/Upload Config.py" afterDir="false" />
-    </list>
+    <list default="true" id="d875bcbe-7709-4e0d-8481-e0aa63cbb78e" name="Default Changelist" comment="" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -140,7 +136,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1552036098485</updated>
-      <workItem from="1552036100945" duration="722000" />
+      <workItem from="1552036100945" duration="1470000" />
     </task>
     <task id="LOCAL-00001" summary="change license  and minor updates">
       <created>1552036435882</created>
@@ -149,22 +145,28 @@
       <option name="project" value="LOCAL" />
       <updated>1552036435882</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="some initial example scripts">
+      <created>1552036930319</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1552036930319</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="722000" />
+    <option name="totallyTimeSpent" value="1470000" />
   </component>
   <component name="ToolWindowManager">
     <frame x="0" y="23" width="1680" height="1027" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info id="Favorites" side_tool="true" />
       <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.20695971" />
       <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Docker" show_stripe_button="false" />
       <window_info anchor="bottom" id="Database Changes" />
-      <window_info anchor="bottom" id="Version Control" />
+      <window_info anchor="bottom" id="Version Control" visible="true" weight="0.32941177" />
       <window_info anchor="bottom" id="Python Console" />
       <window_info anchor="bottom" id="Terminal" />
       <window_info anchor="bottom" id="Event Log" side_tool="true" />
@@ -186,9 +188,10 @@
     <option name="version" value="1" />
   </component>
   <component name="VcsManagerConfiguration">
-    <option name="CHECK_CODE_CLEANUP_BEFORE_PROJECT_COMMIT" value="true" />
+    <option name="CHECK_NEW_TODO" value="false" />
     <MESSAGE value="change license  and minor updates" />
-    <option name="LAST_COMMIT_MESSAGE" value="change license  and minor updates" />
+    <MESSAGE value="some initial example scripts" />
+    <option name="LAST_COMMIT_MESSAGE" value="some initial example scripts" />
   </component>
   <component name="editorHistoryManager">
     <entry file="file://$PROJECT_DIR$/README.rst">
