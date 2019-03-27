@@ -1,0 +1,68 @@
+###########################################################################
+## Export of Script: PS - Update Interface from CDP Neighbor
+## Script-Level: 3
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS - Update Interface from CDP Neighbor
+
+Script-Description:
+	'Update available interface descriptions from data gathered from CDP.'
+
+
+Script-Filter:
+$Vendor eq "Cisco" and $sysDescr like /IOS/
+
+################################
+
+Action:
+Run the Show CDP Neighbor Detail Command to gather neighbor data.
+
+Action-Commands:
+SET: $UpdateMade = "no"
+show cdp neighbor detail
+
+Output-Triggers:
+     Find Neighbor
+
+#################################
+
+Trigger:
+     Find Neighbor
+
+Trigger-Variables:
+
+$Neigh_Name /[A-Za-z0-9\-_]+/
+$Local_Int string
+$Neigh_IntName /[A-Za-z0-9\/]+/
+
+Trigger-Template:
+
+Device ID: [[$Neigh_Name]].*
+Entry .+
+IP address: .+
+Platform: .+
+Interface: [[$Local_Int]], .+: [[$Neigh_IntName]]
+
+Trigger-Commands: { $UpdateMade eq "no" }
+
+DEBUG:config t
+
+Trigger-Commands:
+DEBUG:interface $Local_Int
+DEBUG:Description Connection to $Neigh_Name on Interface $Neigh_IntName
+SET: $UpdateMade = "yes"
+
+########################################
+
+Action:
+End and Write Memory
+
+Action-Commands: { $UpdateMade eq "yes" }
+
+end
+write mem
+
+#########################################

@@ -1,0 +1,50 @@
+###########################################################################
+## Export of Script: PS Cisco License Check
+## Script-Level: 2
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS Cisco License Check
+
+Script-Description:
+	'Script that will do a sh license and check to see if any are in evaluation and generate an issue'
+
+Script-Filter:
+	$Vendor eq "Cisco"
+
+######################
+
+Action:
+	Get License
+
+Action-Commands:
+	sh license
+
+Output-Triggers:
+	Check License
+
+################
+Issue:
+	Check License
+
+Issue-ID:
+	LicenseIssue
+
+Issue-Severity:
+	error
+
+Issue-Variables:
+	$lic_type /\w+/
+
+Issue-Template:
+	License Type: [[$lic_type]]
+
+Issue-Filter:
+	$lic_type not in ["Permanent"]
+
+Issue-Details:
+Name $Name
+Address $IPAddress
+License $lic_type
