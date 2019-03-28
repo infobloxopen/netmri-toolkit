@@ -1,0 +1,28 @@
+###########################################################################
+## Export of Script: PS Training SNMP v1
+## Script-Level: 3
+## Script-Category: Uncategorized
+###########################################################################
+
+Script:
+	PS Training SNMP v1
+
+Script-Description:
+	'Configured our SNMP Standards'
+
+Script-Filter:
+	true
+
+########################################################################
+Action:
+	Config SNMP
+
+Action-Commands: 
+	config t
+	snmp-server READ infoblox RO
+	snmp-server WRITE netmri RW
+	end
+	wr mem
+
+########################################################################
+

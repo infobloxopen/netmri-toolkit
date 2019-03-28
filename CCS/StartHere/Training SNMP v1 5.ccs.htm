@@ -1,0 +1,42 @@
+###########################################################################
+## Export of Script: PS Training SNMP v1 5
+## Script-Level: 3
+## Script-Category: Uncategorized
+###########################################################################
+
+Script:
+	PS Training SNMP v1 5
+
+Script-Description:
+	'Configured our SNMP Standards'
+
+Script-Filter:
+	$vendor in ["Cisco","HP"]
+
+
+########################################################################
+Action:
+	Config SNMP
+
+Action-Commands: {$Vendor eq "HP"}
+	config t
+	snmp-server READ infoblox RO
+	snmp-server WRITE netmri RW
+	end
+	wr mem
+
+Action-Commands: {$Vendor eq "Cisco" and $sysdescr like /NX-OS/}
+	config t
+	snmp-server community infoblox RO
+	snmp-server community netmri RW
+	end
+	copy run start \r
+
+Action-Commands: {$Vendor eq "Cisco" and $sysdescr like /IOS/}
+	config t
+	snmp-server community infoblox RO
+	snmp-server community netmri RW
+	end
+	wr mem
+########################################################################
+

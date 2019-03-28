@@ -1,0 +1,56 @@
+###########################################################################
+## Export of Script: PS Training SNMP v3
+## Script-Level: 3
+## Script-Category: Uncategorized
+###########################################################################
+
+Script:
+	PS Training SNMP v3
+
+Script-Description:
+	'Configured our SNMP Standards'
+
+Script-Filter:
+	$vendor eq "Cisco" and $sysdescr like /IOS/
+
+########################################################################
+Action:
+	Config SNMP
+
+Action-Commands: 
+	SET: $updatemade = "no"
+	sh run | inc snmp-server
+	#snmp-server community public RO
+	#snmp-server community infoblox RW
+	#snmp-server community sifbaksh RO
+
+Output-Triggers:
+Parse Output
+########################################################################
+Trigger:
+	Parse Output
+
+Trigger-Variables:
+	$snmpcom string 
+
+Trigger-Template:
+	snmp-server community [[$snmpcom]] (RO|RW)
+
+Trigger-Commands: { $updatemade eq "no" and $snmpcom not in ["infoblox","sif"]}
+config t
+SET: $updatemade = "yes"
+
+Trigger-Commands: { $updatemade eq "yes"and $snmpcom not in ["infoblox","sif"]}
+no snmp-server community $snmpcom
+
+
+###########################################
+
+Action:
+	Add New Community
+
+Action-Commands:{ $updatemade eq "yes"}
+	snmp-server community infoblox RW
+	snmp-server community sifbaksh RW
+	end
+	wr mem
