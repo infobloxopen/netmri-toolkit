@@ -1,0 +1,88 @@
+###########################################################################
+## Export of Script: IP Helper Change Script
+## Script-Level: 3
+## Script-Category: Uncategorized
+###########################################################################
+
+Script:
+	IP Helper Change Script
+
+Script-Description:
+	A script for you to ensure that all three helper addresses are present on any interface that currently has an existing helper address.
+
+Script-Filter:
+	$Vendor eq "Cisco" and $Type in ["Router","Switch-Router"] and $sysDescr like /IOS/
+
+################
+
+Action:
+	Find Interfaces
+
+Action-Description:
+	Find valid interfaces in order to process them for IP Helper addresses.  
+
+Action-Commands:
+	SET: $UpdateMade = "no"
+	SET: $FoundHelper = "no"
+	sho ip int brief
+
+Output-Triggers:
+	Process Interfaces
+
+################
+Trigger:
+	Process Interfaces
+
+Trigger-Description:
+	Find valid interfaces to check for helpers - An interface that has an ip address and is "up"
+
+Trigger-Variables:
+	$IntName /(\w+\d+(\/\d{1,2}|\/\d{1,2}\/\d+|\/\d{1,2}\.\d+|\/\d{1,2}\:\d+)?|\w+-\w+\d{1,3})/
+
+Trigger-Template:
+	[[$intName]]\s+\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\s+\w+\s+\w+\s+up.+up
+
+Trigger-Commands:{$UpdateMade eq "no"}
+	sho run interface $intName
+
+Trigger-Commands:{$UpdateMade eq "yes"}
+	do sho run interface $intName
+
+Output-Triggers:
+	Process Helper
+
+#################
+Trigger:
+	Process Helper
+	
+Trigger-Description:
+	Take each valid interface above and look for an IP Helper statement in that interface.
+	You can add more than one IP helper below please add below to the 2nd Trigger-Commands area
+	Where you see "DEBUG:ip helper-address 10.10.10.10", DEBUG:ip helper-address 10.10.10.20"
+
+Trigger-Variables:
+	$Helper ipaddress
+
+Trigger-Template:	
+	interface .+
+	.+
+	ip helper-address [[$Helper]]
+
+Trigger-Commands:{$UpdateMade eq "no"}
+	DEBUG:config t
+
+Trigger-Commands:
+	DEBUG:interface $intName
+	DEBUG:ip helper-address 10.10.10.10
+	SET: $UpdateMade = "yes"
+
+###################
+Action:
+	 and Write Mem
+
+Action-Description:
+	End config mode and write memory only if a change was made
+
+Action-Commands:{$UpdateMade eq "yes"}
+	DEBUG:end
+	DEBUG:write mem

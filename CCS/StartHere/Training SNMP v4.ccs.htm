@@ -1,0 +1,52 @@
+###########################################################################
+## Export of Script: PS Training SNMP v3
+## Script-Level: 3
+## Script-Category: Uncategorized
+###########################################################################
+
+Script:
+	PS Training SNMP v3
+
+Script-Description:
+	'Configured our SNMP Standards'
+
+Script-Filter:
+	$vendor eq "Cisco" and $sysdescr like /IOS/
+
+########################################################################
+Action:
+	Config SNMP
+
+Action-Commands: 
+	SET: $updatemade = "no"
+	sh run | inc logging
+
+Output-Triggers:
+Parse Output
+########################################################################
+Trigger:
+	Parse Output
+
+Trigger-Variables:
+	$snmpcom ipaddress 
+
+Trigger-Template:
+	logging[[$snmpcom]]
+
+Trigger-Commands: { $updatemade eq "no" and $snmpcom not in ['10.10.10.1','10.10.10.2']}
+config t
+SET: $updatemade = "yes"
+
+Trigger-Commands: {$updatemade eq "yes" and $snmpcom not in ['10.10.10.1','10.10.10.2']}
+no logging $snmpcom
+
+###########################################
+
+Action:
+	Add New Community
+
+Action-Commands:{$updatemade eq "yes"}
+	logging 10.10.10.1
+	logging 10.10.10.2
+	end
+	wr mem
