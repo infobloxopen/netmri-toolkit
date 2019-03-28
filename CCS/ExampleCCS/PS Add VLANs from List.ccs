@@ -1,0 +1,58 @@
+###########################################################################
+## Export of Script: PS Add VLANs from List
+## Script-Level: 3
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS Add VLANs from List
+
+Script-Description:
+	'This script will update NTP using a list of Interface'
+
+Script-Filter:
+$Vendor eq "Cisco" and $SysDescr like /IOS/
+
+###############
+
+Action:
+Get Usernames
+
+Action-Commands:
+sho run | inc username
+SET: $UpdateMade = "no"
+
+Output-Triggers:
+Update VLAN
+
+################
+Trigger:
+Update VLAN
+
+Trigger-Filter:
+true
+
+Trigger-Commands: {$UpdateMade eq "no"}
+DEBUG:config t
+SET: $UpdateMade = "yes"
+SET: $vlan = 1
+
+Trigger-Commands:
+EXPR: $myvlan = $myvlan + 1
+DEBUG:$myvlan
+SET: $vlan_ID = getListValue(vlans,test,$myvlan,vlanID,null)
+
+Trigger-Commands:{$vlan_ID ne "null"}
+DEBUG:vlan $vlan_ID
+DEBUG:name $vlan_name
+
+
+################ 
+
+Action:
+End and Write Memory
+
+Action-Commands:{$UpdateMade eq "yes"}
+DEBUG:End
+DEBUG:Write Mem

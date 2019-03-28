@@ -1,0 +1,65 @@
+###########################################################################
+## Export of Script: PS Check Local Users
+## Script-Level: 3
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS Check Local Users
+
+Script-Description:
+	'Check local users'
+
+Script-Filter:
+$Vendor eq "Cisco" and $SysDescr like /IOS/
+
+###############
+
+Action:
+Get Usernames
+
+Action-Commands:
+sho run | inc username
+SET: $UpdateMade = "no"
+
+Output-Triggers:
+Update Password
+
+################
+Trigger:
+Update Password
+
+Trigger-Variables:
+$username word
+
+Trigger-Template:
+username [[$username]] .+
+
+
+Trigger-Commands:
+SET: $unique_user = getListValue(Account_User,username,$username,same_user,MISSING)
+
+Output-Triggers:
+	Check Local User
+
+#########################################################################
+Issue:
+	Check Local User
+
+Issue-ID:
+	CheckLocalUser
+
+Issue-Severity:
+	Error
+
+Issue-Description:
+	Check local user
+
+Issue-Filter:
+	$unique_user eq "MISSING"
+
+Issue-Details:
+	Host		$IPAddress
+	Name		$Name
+	MissingUser $same_user

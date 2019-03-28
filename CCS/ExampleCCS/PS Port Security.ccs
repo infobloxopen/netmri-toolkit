@@ -1,0 +1,71 @@
+###########################################################################
+## Export of Script: PS Port Security
+## Script-Level: 3
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS Port Security
+
+Script-Description:
+	'Enable Port Security and add macc-address to the port config'
+
+Script-Filter:
+	$vendor eq "Cisco"
+
+############################
+Action:
+	Show Port Security Before
+
+Action-Commands:
+	show port-security address
+
+############################
+Action:
+	Show mac
+
+Action-Commands:
+	SET: $UpdateMade = "no"
+	sh mac address-table | ex CPU
+
+Output-Triggers:
+	Process Security
+
+##########################
+
+Trigger:
+	Process Security
+
+Trigger-Description:
+	Process the output of the show command to find the mac address
+
+Trigger-Variables:
+	$port string
+	$mac string
+
+Trigger-Template:
+	\d{1,3}\s{1,4}[[$mac]]\s*(DYNAMIC|Static|STATIC)\s*[[$port]]
+
+Trigger-Commands:{$UpdateMade eq "no"}
+	DEBUG: config t
+
+Trigger-Commands:{$port ne "Gi3/0/19" or $port ne "Gi3/0/11"}
+	DEBUG: int $port
+	DEBUG: switchport port-security
+	DEBUG: shut
+	DEBUG: switchport port-security mac-address $mac
+	DEBUG: no shut
+	SET: $UpdateMade = "yes"
+
+###################
+Action:
+	End and Write Mem
+
+Action-Description:
+	End config mode and write memory only if a change was made
+
+Action-Commands:{$UpdateMade eq "yes"}
+	DEBUG: end
+	DEBUG: show port-security address
+	DEBUG: write mem

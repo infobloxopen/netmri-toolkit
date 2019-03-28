@@ -1,0 +1,28 @@
+###########################################################################
+## Export of Script: PS Update NTP from a List
+## Script-Level: 3
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS Update NTP from a List
+
+Script-Description:
+	'This script will update NTP using a list of Interface'
+
+Script-Filter:
+	$Vendor eq "Cisco"
+########################
+
+Action:
+	Update Location
+
+Action-Commands:
+SET: $sif = getListValue(sif_test,name,$name, location,NOTFOUND)
+
+Action-Commands:{$sif ne "NOTFOUND"}
+DEBUG: config t
+DEBUG: snmp-server location $sif
+DEBUG: end
+DEBUG: wr mem

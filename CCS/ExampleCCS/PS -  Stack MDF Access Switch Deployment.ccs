@@ -1,0 +1,212 @@
+###########################################################################
+## Export of Script: PS -  Stack MDF Access Switch Deployment
+## Script-Level: 3
+## Script-Category: 
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	PS -  Stack MDF Access Switch Deployment
+
+Script-Description:
+	'1 or 2 Stack MDF Access Switch Deployment'
+
+Script-Filter:
+	$vendor eq "Cisco" and $model like /2960x/
+
+
+Script-Variables:
+	$site_abv  string  "Site_ABV"
+	$site_ip  string  "Site_IP"
+	$location  string  "Site_location"
+	$one_stack		boolean
+	$one_fiber		boolean
+	$two_stack		boolean
+	$two_fiber		boolean
+###########################################################################
+Action:
+	Push Configs
+
+Action-Commands:
+	SET: $one_stack = "no"
+	SET: $one_fiber = "no"
+	SET: $two_stack = "no"
+	SET: $two_fiber = "no"
+
+Action-Commands: { $one_stack eq "on" }
+	SET: $one_stack = "yes"
+
+Action-Commands: { $one_fiber eq "on" }
+	SET: $one_fiber = "yes"
+
+Action-Commands: { $two_stack eq "on" }
+	SET: $two_stack = "yes"
+
+Action-Commands: { $two_fiber eq "on" }
+	SET: $two_fiber = "yes"
+
+Action-Commands:{$one_stack eq "on"}
+	interface range GigabitEthernet1/0/1-47
+	 description Users
+	 switchport access vlan 102
+	 switchport mode access
+	 network-policy 1
+	!
+Action-Commands:{$one_fiber eq "no"}
+	interface GigabitEthernet1/0/48
+	 description Mem Po2 - $site_abv-SW01 10.$site_ip.10.1 - G1/0/3
+	 switchport trunk native vlan 110
+	 switchport mode trunk
+	 channel-group 2 mode on
+
+Action-Commands:{$one_fiber eq "yes"}
+	interface GigabitEthernet1/0/49
+	 description Mem Po2 - $site_abv-SW01 10.$site_ip.10.1 - G1/0/3
+	 switchport trunk native vlan 110
+	 switchport mode trunk
+	 channel-group 2 mode on
+	!
+Action-Commands:{$two_stack eq "yes"}
+	interface range GigabitEthernet2/0/1-47
+	 description Users
+	 switchport access vlan 102
+	 switchport mode access
+	 network-policy 1
+	!
+Action-Commands:{$two_fiber eq "no"}
+	interface GigabitEthernet2/0/48
+	 description Mem Po2 - $site_abv-SW01 10.$site_ip.10.1 - G1/0/4
+	 switchport trunk native vlan 110
+	 switchport mode trunk
+	 channel-group 2 mode on
+	!
+Action-Commands:{$two_fiber eq "yes"}
+	interface GigabitEthernet2/0/49
+	 description Mem Po2 - $site_abv-SW01 10.$site_ip.10.1 - G1/0/4
+	 switchport trunk native vlan 110
+	 switchport mode trunk
+	 channel-group 2 mode on
+
+Action-Commands:
+	no service pad
+	service tcp-keepalives-in
+	service tcp-keepalives-out
+	service timestamps debug datetime localtime
+	service timestamps log datetime localtime
+	service password-encryption
+	!
+	hostname $site_abv-SW02
+	!
+	boot-start-marker
+	boot-end-marker
+	!
+	logging buffered 51200
+	no logging console
+	ip arp proxy disable
+	!
+	!
+	ip domain-name net.int.teleflex.net
+	!
+	spanning-tree mode pvst
+	spanning-tree portfast bpduguard default
+	spanning-tree extend system-id
+	!
+	network-policy profile 1
+	 voice vlan 100
+	!
+	errdisable recovery interval 300
+	errdisable recovery cause udld
+	errdisable recovery cause bpduguard
+	errdisable recovery cause security-violation
+	errdisable recovery cause link-flap
+	errdisable recovery cause psecure-violation
+	!
+	vlan internal allocation policy ascending
+	!
+	ip tftp source-interface Vlan110
+	ip ssh source-interface Vlan110
+	ip ssh version 2
+	ip scp server enable
+	lldp run
+	!
+	class-map match-all match-all-voice
+	  match access-group name voice-traffic
+	!
+	policy-map voip
+	 class match-all-voice
+	   set dscp ef
+	!
+	interface Port-channel2
+	 description $site_abv-SW01 10.$site_ip.10.1 - G1/0/48, G2/0/48 to G1/0/3-4
+	 switchport trunk native vlan 110
+	 switchport mode trunk
+	!
+	interface FastEthernet0
+	 no ip address
+	!
+	interface Vlan1
+	 no ip address
+	 no ip route-cache
+	 shutdown
+	!
+	interface Vlan110
+	 description Management-10.$site_ip.10.0
+	 ip address 10.$site_ip.10.2 255.255.255.0
+	 no ip redirects
+	!
+	ip default-gateway 10.$site_ip.10.1
+	no ip http server
+	no ip http secure-server
+	!
+	ip tacacs source-interface Vlan110
+	!
+	ip access-list extended voice-traffic
+	 permit ip 10.$site_ip.0.0 0.0.1.255 any
+	logging origin-id hostname
+	logging source-interface Vlan110
+	logging host 192.168.50.79
+	logging host 10.1.5.53
+	!
+	snmp-server group Monitoring v3 priv read ReadOnly
+	snmp-server group PrimeInfra v3 priv read GlobalWrite write GlobalWrite
+	snmp-server view ReadOnly system included
+	snmp-server view ReadOnly ifTable included
+	snmp-server view GlobalWrite iso included
+	snmp-server community D35T1NY RO
+	snmp-server community 3T3RN1TY RW
+	snmp-server location $location
+	snmp-server contact Teleflex Global Service Desk
+	snmp-server chassis-id $site_abv-SW02
+	snmp-server enable traps
+	snmp-server host 10.1.50.151 3T3RN1TY
+	snmp-server host 10.1.5.53 D35T1NY
+	tacacs-server host 172.16.0.77
+	tacacs-server timeout 2
+	tacacs-server directed-request
+	tacacs-server key 7 1203210514011C0E277D302C34
+	!
+	!
+	!
+	banner login \^\r\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\* WARNING \*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\rThis system is the property of Teleflex Inc and\/or its affiliates.\rIts use and access are intended solely for authorized individuals\rof the company. By using this system, all users acknowledge notice\rof, and agree to comply with all Teleflex Global IT Policies.\rUse of this system may be logged or recorded. Unauthorized or\rimproper use of this system is strictly prohibited and may be\rsubject to disciplinary action or civil\/criminal prosecution.\r\rDo not continue if you do not agree to the conditions stated in\rthis warning. For assistance, contact Teleflex Global Service Desk.\r\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\*\r\^
+	alias exec ship show ip interface brief
+	!
+	line con 0
+	 exec-timeout 15 0
+	 logging synchronous
+	line vty 0 4
+	 exec-timeout 15 0
+	 length 30
+	 transport input ssh
+	 transport output telnet ssh
+	line vty 5 15
+	 exec-timeout 15 0
+	 transport input ssh
+	 transport output telnet ssh
+	!
+	ntp source Vlan110
+	ntp server 10.1.222.3
+	ntp server 10.145.70.70
+	ntp server 10.189.10.70
+	vtp domain $site_abv
+	vtp mode client
+	vtp password 3uph0r1a
