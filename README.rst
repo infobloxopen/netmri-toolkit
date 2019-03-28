@@ -1,31 +1,14 @@
-# netmri-toolkit
-
-
-
 ===============================
 Infoblox NetMRI Toolkit
 ===============================
+Public repository with example content for NetMRI
 
-* Free software: MIT License
+[join us on #slack](https://join.slack.com/t/infobloxnetmri/shared_invite/enQtNTkxOTQ5ODQ1ODQ2LTUyZWRmYTM0MGJkM2JmYTRmM2Q5NzVkN2MzZjEwMjY0NGY0YTU2MjA1ZDk0NWRhYzFmMWJmODU0YWQxOTI0MWM)
 
-Example scripts for CCS and Perl, as well as Python access to the REST API.
-Also includes example policies and policy rules.
-
-We encourage the NetMRI community to share scripts in this repository.  
+We encourage the NetMRI community to share scripts and collaborate here.  
 All contributions are welcome, e.g. CCS, Perl, Python, external scripts, Policy XML, DSBs
-Thanks for your contributions!
 
-Python Examples
----------------
-
-The Python examples use https://github.com/infobloxopen/infoblox-netmri to
-interact with the NetMRI.
-
-The scripts will read connection parameters from environment variables.
-Change the netmri.env file to contain your connection details, then source it
-before running the scripts.
-
-Full NetMRI Python Scripting support is part of NetMRI as of 7.2
+Thank you for your contributions!
 
 NetMRI Documentation
 --------------------
