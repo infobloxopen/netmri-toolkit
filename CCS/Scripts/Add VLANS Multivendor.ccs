@@ -1,0 +1,209 @@
+###########################################################################
+## Export of Script: Add new vlan to all Trunks - multivendor
+## Script-Level: 3
+## Script-Category: Uncategorized
+## Script-Language: CCS
+###########################################################################
+
+Script:
+	Add new vlan to all Trunks- multivendor
+
+Script-Description:
+	''This script adds a vlan to all the trunk ports on a Cisco, H3C, Extreme and Enterasys switches.''
+
+Script-Variables:
+	$VlanID integer "Vlan ID"
+	$VlanName word "Vlan name"
+
+Script-Filter:
+	true
+
+########################################################################
+Action:	
+	Create the VLAN
+########################################################################
+
+Action-Commands: {$Vendor eq "Cisco" and $sysDescr like /IOS/}
+	config t
+	interface vlan $VlanID
+	description $VlanName
+	exit
+	exit
+
+Action-Commands: {$Vendor eq "H3C"}
+	vlan $VlanID
+	name $VlanName
+	quit
+
+Action-Commands: {$Vendor eq "Extreme"}
+	create vlan $VlanName tag $VlanID
+
+Action-Commands: {$Vendor eq "Enterasys"}
+	set vlan create $VlanID
+	set vlan name $vlanID $VlanName
+
+########################################################################
+#	Cisco check trunk ports and add new VLAN to them
+########################################################################
+
+
+Action:
+	Get the config
+
+
+Action-Commands: {$Vendor eq "Cisco" and $sysDescr like /IOS/}
+	show run
+
+Output-Triggers:
+	Process Interfaces Cisco
+
+#-----------------------------------------------------------------------
+
+Trigger:
+	Process Interfaces Cisco
+
+Trigger-Description:
+	For each interface that is a trunk port add the VLAN
+
+Trigger-Variables:
+	$ifName		/[a-zA-Z\/0-9\-]+/
+	
+
+Trigger-Template:
+	interface\s+[[$ifName]]\s*\n[^\!]+switchport mode trunk\n([^\!](?!(channel-group)).*\n)*\!
+
+
+Trigger-Commands:
+	config terminal
+	interface $ifName
+	switchport trunk allowed vlan add $vlanID
+	exit
+	exit
+
+########################################################################
+#	HP check trunk ports and add new VLAN to them
+########################################################################
+
+Action:
+	get config HP
+Action-Description:
+	get the config from HP switch to gather the trunk ports
+Action-Commands: {$Vendor eq "H3C"}
+	display current
+Output-Triggers:
+	Process Interfaces HP
+
+#-----------------------------------------------------------------------
+
+Trigger:
+	Process Interfaces HP
+
+Trigger-Description:
+	For each interface that is a trunk port add the VLAN
+
+Trigger-Variables:
+	$ifNameHP		/[a-zA-Z\/0-9\-]+/
+	
+Trigger-Template:
+interface [[$ifNameHP]]\n[^\#]*\s*port link-type trunk\n([^\#](?!(port\slink-aggregation\sgroup)).*\n)*\#
+						                                                            
+
+Trigger-Commands:
+	interface $ifNameHP
+	port trunk permit VLAN $VlanID
+	quit
+
+########################################################################
+#	Extreme check trunk ports and add new VLAN to them
+########################################################################
+
+Action:
+	Get the config Extreme
+
+
+Action-Commands: {$Vendor eq "Extreme"}
+	show conf | include testvlan
+
+#
+#  For simplification of the PoC it is assumed the trunk ports are the ports which contain testvlan tagged. 
+#  In the actual production this business logic needs to be adapted
+#
+
+Output-Triggers:
+	Process Interfaces Extreme
+
+#-----------------------------------------------------------------------
+
+Trigger:
+	Process Interfaces Extreme
+
+Trigger-Description:
+	For each interface that is a trunk port add the VLAN
+
+Trigger-Variables:
+	$ExtremeTrnk		/.*/
+	
+
+Trigger-Template:
+configure vlan testvlan add ports [[$ExtremeTrnk]]\stagged						                                                            
+
+Trigger-Commands:
+	configure vlan $VlanName add ports $ExtremeTrnk tagged
+
+########################################################################
+#	Enterasys check trunk ports and add new VLAN to them
+########################################################################
+
+Action:
+	Get the config Enterasys
+
+
+Action-Commands: {$Vendor eq "Enterasys"}
+	show conf vlan
+
+Output-Triggers:
+	Process Interfaces Enterasys
+
+#-----------------------------------------------------------------------
+
+Trigger:
+	Process Interfaces Enterasys
+
+Trigger-Description:
+	For each interface that is a trunk port add the VLAN
+
+Trigger-Variables:
+	$EnteraTrnk		/.*/
+	
+#
+#  For simplification of the PoC it is assumed the trunk ports are the ports which contain vlan 212 tagged. 
+#  In the actual production this business logic needs to be adapted
+#
+
+Trigger-Template:
+set vlan egress 212 [[$EnteraTrnk]]\stagged
+
+Trigger-Commands:
+	set vlan egress $VlanID $EnteraTrnk tagged
+	
+########################################################################
+#   Write the new config to memory
+########################################################################
+Action:
+	Write Memory
+
+
+Action-Commands: {$Vendor eq "Cisco" and $sysDescr like /IOS/}
+	SLEEP: 30
+	write memory
+
+Action-Commands: {$Vendor eq "H3C"}
+	save\nY\n\nY\n
+
+Action-Commands: {$Vendor eq "Extreme"}
+	save primary
+
+Action-Commands: {$Vendor eq "Enterasys"}
+	save config	
+
+
