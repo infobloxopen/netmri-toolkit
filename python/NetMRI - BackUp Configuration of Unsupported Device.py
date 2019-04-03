@@ -1,3 +1,6 @@
+# Adding Install directions can be found here:
+# https://community.infoblox.com/t5/Community-Blog/NetMRI-Customized-Configuration-Collection/ba-p/15639
+#
 # BEGIN-SCRIPT-BLOCK
 #
 # Script-Filter:
