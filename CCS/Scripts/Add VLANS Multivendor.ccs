@@ -1,12 +1,12 @@
 ###########################################################################
-## Export of Script: Add new vlan to all Trunks - multivendor
+## Export of Script: Add new vlan to all Trunks - multi-vendor
 ## Script-Level: 3
 ## Script-Category: Uncategorized
 ## Script-Language: CCS
 ###########################################################################
 
 Script:
-	Add new vlan to all Trunks- multivendor
+	Add new vlan to all Trunks- multi-vendor
 
 Script-Description:
 	''This script adds a vlan to all the trunk ports on a Cisco, H3C, Extreme and Enterasys switches.''
@@ -41,6 +41,10 @@ Action-Commands: {$Vendor eq "Extreme"}
 Action-Commands: {$Vendor eq "Enterasys"}
 	set vlan create $VlanID
 	set vlan name $vlanID $VlanName
+
+Action-Commands: {$Vendor eq "juniper"}
+    set vlans $VlanName
+    set vlans $VlanName vlan-id $VlanID
 
 ########################################################################
 #	Cisco check trunk ports and add new VLAN to them
@@ -185,6 +189,40 @@ set vlan egress 212 [[$EnteraTrnk]]\stagged
 
 Trigger-Commands:
 	set vlan egress $VlanID $EnteraTrnk tagged
+
+########################################################################
+#	Juniper check trunk ports and add new VLAN to them
+########################################################################
+
+
+Action:
+	Get the config
+
+
+Action-Commands: {$Vendor eq "Juniper"}
+	show configuration | display set
+
+Output-Triggers:
+	Process Interfaces Juniper
+
+#-----------------------------------------------------------------------
+
+Trigger:
+	Process Interfaces Juniper
+
+Trigger-Description:
+	For each interface that is a trunk port add the VLAN
+
+Trigger-Variables:
+	$ifName		/[a-zA-Z\/0-9\-]+/
+
+
+Trigger-Template:
+	interface\s+[[$ifName]]\s*\n[^\!]+unit 0 family ethernet-switching vlan members\n([^\!](?!(channel-group)).*\n)*\!.+
+
+Trigger-Commands:
+	set interfaces $ifName unit 0 family ethernet-switching vlan members $VlanName
+
 	
 ########################################################################
 #   Write the new config to memory
@@ -206,4 +244,5 @@ Action-Commands: {$Vendor eq "Extreme"}
 Action-Commands: {$Vendor eq "Enterasys"}
 	save config	
 
-
+Action-Commands: {$Vendor eq "Juniper"}
+	commit and quit
