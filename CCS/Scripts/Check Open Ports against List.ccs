@@ -1,0 +1,50 @@
+Script-Filter:
+	$vendor eq "Cisco"
+
+########################################################################
+Action:
+	Show Ports
+
+
+Action-Commands:
+	sh control-plane host open-ports | i LISTEN
+	SET: $open_ports= getListValue(Open_Ports,my_name,$name,open_ports,NOTFOUND)
+
+Output-Triggers:
+	Parse Output
+
+########################################################################
+Trigger:
+	Parse Output
+
+Trigger-Variables:
+	$get_open_port int 
+Trigger-Template:
+	(tcp|udp)\s*\*:[[$get_open_port]]\s.*
+
+Trigger-Commands:
+	SET: $fireissue = "no"
+Trigger-Commands:{ $get_open_port not in '$open_ports'}
+	SET: $fireissue = "yes"
+
+Output-Triggers:
+	ChkOpenPorts
+
+#######################################################################
+
+Issue:
+    ChkOpenPorts
+
+Issue-ID:
+	ChkOpenPorts
+    
+Issue-Severity:
+    Info
+
+Issue-Filter:
+   $fireissue eq "yes"
+Issue-Details:
+    IPaddress $IPAddress
+    Name $Name
+    CurrentPorts $get_open_port
+    ListPorts $open_ports
