@@ -1,0 +1,67 @@
+ 
+############# START CODE BLOCK ################
+ 
+Action:
+                show run
+ 
+Action-Description:
+                Do a show run, and then pull the snmp-server host 1.1.1.1 abc56$7 line out
+                Try to preserve the $ to remove the line
+ 
+Action-Variables:
+                $myhost IPAddress
+                $mycomm string
+                SET: $splititmatch = "no"
+ 
+Action-Commands:
+                show run | inc snmp-server 
+ 
+Output-Triggers:
+                special line
+                split it
+ 
+##############################################
+Trigger:
+                special line
+ 
+Trigger-Description:
+                get the snmp-server lines
+                Assign the last one to a variable
+ 
+Trigger-Variables:
+                $tmpmycomm1 /\w+\$\w+/
+ 
+Trigger-Template:
+                snmp-server host [[$tmpmycomm1]]               
+ 
+Trigger-Commands:
+                #no snmp-server community $tmpmycomm1
+                SET: $splititmatch = "yes"
+ 
+#############################################
+Trigger:
+                split it
+ 
+Trigger-Description:
+                Since our $tmpmycomm var matched the /\w+\$\w+/ regex, split it
+ 
+Trigger-Filter:
+                $splititmatch eq "yes"
+ 
+Trigger-Variables:
+                $split1 string
+                $split2 string
+                $tmpmyhost2 IPAddress
+ 
+Trigger-Template:
+                snmp-server community [[$split1]]\x24[[$split2]]
+ 
+Trigger-Commands:
+                SET: $mycomm = $split1\x24$split2
+                DEBUG: config t
+                DEBUG:no snmp-server community $mycomm
+                end
+ 
+ 
+############# END CODE BLOCK ################
+ 
