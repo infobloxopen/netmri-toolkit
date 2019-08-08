@@ -1,0 +1,65 @@
+########################################################################
+## Export of Script: Disable interface in subnet
+## Script-Level: 3
+## Script-Category:
+## Script-Language: CCS
+########################################################################
+
+Script:
+    Disable interface in subnet
+
+Script-Description:
+    'Disable all interfaces and sub-interfaces in single subnet (specified at runtime) except for interfaces with name channel1, ap0 or NV10'
+
+Script-Filter:
+    $vendor eq "Cisco" and $sysdescr like /IOS/
+
+Script-Variables:
+    $networktoremove    ipaddress   "network to remove"
+
+########################################################################
+
+Action:
+    show ip int br | include $networktoremove
+
+Action-Commands:
+    SET: $updatemade = "no"
+    show ip int br | include $networktoremove
+
+Output-Triggers:
+    Parse Output
+
+########################################################################
+
+Trigger-Variables:
+    $IntName /\w+\d+(\/\d{1,2}|\/\d{1,2}\/\d+|\/\d{1,2}\.\d+|\/\d{1,2}\:\d+)?/
+
+Trigger-Template:
+    [[$IntName]]\s
+
+Trigger-Commands:{$IntName not in ["channel1","ap0","NVI0"]}
+    configure terminal
+    interface $IntName
+    description "Manipulated by NetMRI Script"
+    shutdown
+    SET: $updatemade = "yes"
+    exit
+
+Trigger-Commands:{$UpdateMade eq "yes" and $IntName not in ["channel1","ap0","NVI0"]}
+    interface $IntName
+    description "Manipulated by NetMRI Script"
+    shutdown
+    exit
+
+
+########################################################################
+
+Action:
+    End and Write Mem
+
+Action-Description:
+    End config mode and write memory only if a change was made
+
+Action-Commands:{$UpdateMade eq "yes"}
+    exit
+    write mem

@@ -1,0 +1,111 @@
+########################################################################
+## Export of Script: Change bandwidth on interface
+## Script-Level: 3
+## Script-Category: Uncategorized
+## Script-Language: CCS
+########################################################################
+Script:
+	Change bandwidth on interface
+
+Script-Description:
+	'Script to replace bandwidth from one value to another on interfaces and sub-interfaces that start with an octet.
+    Old bandwidth, new bandwidth and octet(s) have to be provided at runtime'
+
+Script-Filter:
+    $Vendor eq "Cisco" and $sysDescr like /IOS/
+
+Script-Variables:
+	 $networktochange   ipaddress   "Replace bandwidth for interfaces and sub-interfaces that start with this octet"
+	 $oldbandwidth      int         "Bandwidth value to look for (integer in kb)"
+	 $newbandwidth      int         "Bandwidth value to replace the old one with (integer in kb)"
+
+########################################################################
+#   Check if interface is in network we want to change                 #
+########################################################################
+
+Action:
+    ShowInterfaces
+
+Action-Description:
+    List interfaces and filter for the octet we want to limit the script to
+
+Action-Commands:
+    SET: $updatemade = "no"
+    show ip int br | include $networktochange
+
+Output-Triggers:
+    Get Interfaces
+
+########################################################################
+#   Check if interface has BW value we want to replace                 #
+########################################################################
+
+Trigger:
+    Get Interfaces
+
+Trigger-Description:
+    Trigger to parse out the interfaces from show ip int brief, extracts most types of interfaces and sub-interfaces.
+
+Trigger-Variables:
+    $IntName /\w+\d+(\/\d{1,2}|\/\d{1,2}\/\d+|\/\d{1,2}\.\d+|\/\d{1,2}\:\d+)?/
+
+Trigger-Template:
+    [[$IntName]]\s
+
+Trigger-Commands:
+    show interface $IntName | include ^_.MTU_.+_BW_$oldbandwidth
+
+Output-Triggers:
+    Parse Bandwidth
+
+########################################################################
+#   Check if interface has old BW value and update to new one          #
+########################################################################
+
+Trigger:
+    Parse Bandwidth
+
+Trigger-Description:
+    Trigger to parse out the bandwidth from show interface, extracts bandwidth for evaluation
+
+Trigger-Variables:
+    $CurrentBandwidth int
+
+Trigger-Template:
+    BW\s[[$CurrentBandwidth]]\s
+
+Trigger-Commands: {$updatemade eq "no"}
+    SET: $updatemade = "yes"
+    conf t
+    interface $IntName
+    bandwidth $newbandwidth
+    EXPR: $counter = 1
+    exit
+
+Trigger-Commands: {$updatemade eq "yes"}
+    interface $IntName
+    bandwidth $newbandwidth
+    EXPR: $counter = $counter + 1
+    exit
+
+########################################################################
+#   Write the new config to memory                                     #
+########################################################################
+
+Action:
+    Save Config if a change was made
+
+Action-Commands: {$updatemade eq "no"}
+    LOG-INFO: No Change was made
+
+Action-Commands: {$updatemade eq "yes" and $counter eq 1}
+    LOG-INFO: One interfaces has been updated
+    PRINT: $counter interface has been updated
+    end
+    write memory
+
+Action-Commands: {$updatemade eq "yes" and $counter > 1}
+    LOG-INFO: Multiple interfaces have been updated
+    PRINT: $counter interface have been updated
+    end
+    write memory
