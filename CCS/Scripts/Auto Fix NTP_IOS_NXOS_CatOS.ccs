@@ -1,0 +1,213 @@
+###########################################################################
+## Export of Script: Auto Fix NTP
+## Script-Level: 3
+## Script-Category: Uncategorized
+###########################################################################
+
+Script:
+	Auto Fix NTP
+
+Script-Description:
+	 Fix policy violations in the the NTP section
+
+Script-Filter:
+$Vendor eq "Cisco" and $SysDescr like /(IOS|NX-OS|Catalyst O)/
+
+#######################
+ 
+Action:
+Get NTP Info
+ 
+Action-Description:
+This first action gathers up the list of current ntp servers in the running config and initialized variables to be used in the script. 
+ 
+Action-Commands:
+SET: $UpdateMade = "no"
+SET: $GotNTP = "no"
+SET: $CGotNTP = "no"
+
+Action-Commands:{$sysDescr like /(IOS|NX-OS)/}
+sho run | inc ntp
+
+Action-Commands:{$sysDescr like /Catalyst O/}
+show config
+ 
+Output-Triggers:
+Check NTP
+CCheck NTP
+
+##############
+
+Trigger:
+Check NTP
+ 
+Trigger-Description:
+This section looks for the existence of the required logging statements that belong in each config. One Trigger for each.
+ 
+Trigger-Filter:
+$Sysdescr like /(IOS|NX-OS)/
+ 
+Trigger-Template:
+ntp server 206.202.171.201
+ 
+Trigger-Commands:
+SET: $GotNTP = "yes"
+ 
+###############
+
+Trigger:
+CCheck NTP
+ 
+Trigger-Description:
+This section looks for the existence of the required logging statements that belong in each config. One Trigger for each.
+ 
+Trigger-Filter:
+$Sysdescr like /Catalyst O/
+ 
+Trigger-Template:
+set ntp server 206.202.171.201
+ 
+Trigger-Commands:
+SET: $CGotNTP = "yes"
+
+###############
+
+Action:
+Add Missing NTP Servers
+
+# If any of the checks above have not matched and changed their variable to "yes", we will enter config mode to add missing statements.
+
+Action-Commands:{$UpdateMade eq "no" and $GotNTP eq "no" and $sysDescr not like /Catalyst O/}
+config t
+
+# Each action statement below is filtered and will only run if the check for the existence of the line wasn't successful. 
+
+Action-Commands:{$GotNTP eq "no" and $sysDescr like /(IOS|NX-OS)/}
+ntp server 206.202.171.201
+SET: $UpdateMade = "yes"
+
+Action-Commands:{$CGotNTP eq "no" and $sysDescr like /Catalyst O/}
+set ntp server 206.202.171.201
+SET: $UpdateMade = "yes"
+
+############################
+
+Action:
+Get Clock Info
+
+Action-Description:
+Get config info for Clock settings
+
+Action-Commands:
+SET: $GotTime = "no"
+SET: $NGotTime = "no"
+SET: $CGotTime = "no"
+
+Action-Commands:{$UpdateMade eq "yes"}
+end
+SET: $UpdateMade = "no"
+
+Action-Commands:{$sysDescr like /(IOS|NX-OS)/}
+sho run | inc clock
+
+Action-Commands:{$sysDescr like /Catalyst O/}
+show config
+ 
+Output-Triggers:
+Check Clock
+NCheck Clock
+CCheck Clock
+
+##############
+
+Trigger:
+Check Clock
+ 
+Trigger-Description:
+This section looks for the existence of the required clock statements that belong in each config.
+ 
+Trigger-Filter:
+$Sysdescr like /IOS/
+ 
+Trigger-Template:
+clock timezone PST -8
+clock summer-time PDT
+ 
+Trigger-Commands:
+SET: $GotTime = "yes"
+
+##############
+
+Trigger:
+NCheck Clock
+ 
+Trigger-Description:
+This section looks for the existence of the required clock statements that belong in each config.
+ 
+Trigger-Filter:
+$Sysdescr like /NX-OS/
+ 
+Trigger-Template:
+clock timezone PST
+clock summer-time PDT
+ 
+Trigger-Commands:
+SET: $NGotTime = "yes"
+
+##############
+
+Trigger:
+CCheck Clock
+ 
+Trigger-Description:
+This section looks for the existence of the required clock statements that belong in each config.
+ 
+Trigger-Filter:
+$Sysdescr like /Catalyst O/
+ 
+Trigger-Template:
+set timezone PST -8
+set summertime enable PDT
+ 
+Trigger-Commands:
+SET: $CGotTime = "yes"
+
+###############
+
+Action:
+Fix Clock Settings
+
+# If any of the checks above have not matched and changed their variable to "yes", we will enter config mode to add missing statements.
+
+Action-Commands:{$UpdateMade eq "no" and ($GotTime eq "no" or $NGotTime eq "no") and $sysDescr not like /Catalyst O/}
+config t
+
+# Each action statement below is filtered and will only run if the check for the existence of the line wasn't successful. 
+
+Action-Commands:{$GotTime eq "no" and $sysDescr like /IOS/}
+clock timezone PST -8
+clock summer-time PDT recurring
+SET: $UpdateMade = "yes"
+
+Action-Commands:{$NGotTime eq "no" and $sysDescr like /NX-OS/}
+clock timezone PST -8
+clock summer-time PDT
+SET: $UpdateMade = "yes"
+
+Action-Commands:{$CGotTime eq "no" and $sysDescr like /Catalyst O/}
+set timezone PST -8
+set summertime enable PDT
+SET: $UpdateMade = "yes"
+
+##############
+Action:
+End and Write Memory
+ 
+Action-Commands:{$UpdateMade eq "yes" and $sysDescr like /IOS/}
+End
+Write Mem
+
+Action-Commands:{$UpdateMade eq "yes" and $sysDescr like /NX-OS/}
+End
+copy run start
+
