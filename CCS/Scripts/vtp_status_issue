@@ -1,0 +1,47 @@
+Script-Filter:
+	$vendor eq "Cisco"
+
+########################################################################
+Action:
+	Show Command
+
+Action-Commands:
+	sh vtp status
+        
+Output-Triggers:
+    Parse-Output
+
+########################################################################
+
+Trigger:
+    Parse-Output
+    
+Trigger-Variables:
+    $vtp_status string
+
+Trigger-Template:
+VTP Operating Mode              : [[$vtp_status]]
+
+Trigger-Commands:{$vtp_status like /Server/}
+    SET: $fireissue = "yes"
+
+Output-Triggers:
+	VTP_Error
+#######################################################################
+
+Issue:
+    VTP_Error
+
+Issue-ID:
+    VTPError
+    
+Issue-Severity:
+    Error
+
+Issue-Filter:
+    $fireissue eq "yes"
+
+Issue-Details:
+    DeviceIP $IPAddress
+    DeviceName $Name
+    VTP_Status $vtp_status
