@@ -1,5 +1,6 @@
 
-.idea/workspace.xml
-python/.DS_Store
+#Ignore Pycharm Files
+.idea/**
 
-\.idea/
+#Ignore OSX
+.DS_Store
