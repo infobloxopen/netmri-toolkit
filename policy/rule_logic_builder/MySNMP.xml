@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>Sif Baksh</author>
+  <created-at type="datetime">2020-02-05 09:45:17</created-at>
+  <description>Checking SNMP configuration</description>
+  <name>1 - Check SNMP</name>
+  <read-only type="boolean">false</read-only>
+  <remediation></remediation>
+  <severity>error</severity>
+  <short-name>MySNMP</short-name>
+  <updated-at type="datetime">2020-02-05 09:46:24</updated-at>
+<PolicyRuleLogic editor='logic-builder' expression='1' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<ConfigFileCheck label='1' note='' op='contains-all'>snmp-server enable traps snmp authentication linkdown linkup coldstart warmstart
+snmp-server enable traps transceiver all
+snmp-server enable traps tty
+snmp-server enable traps auth-framework sec-violation
+snmp-server enable traps config-copy
+snmp-server enable traps config
+snmp-server enable traps config-ctid
+snmp-server enable traps energywise</ConfigFileCheck>
+
+</PolicyRuleLogic>  <NetmriVersion>7.4.1.95749</NetmriVersion>
+</policy-rule>

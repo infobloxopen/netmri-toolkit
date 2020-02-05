@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>Sif Baksh</author>
+  <created-at type="datetime">2020-02-05 09:49:00</created-at>
+  <description>Checking AAA configuration</description>
+  <name>1- Check AAA</name>
+  <read-only type="boolean">false</read-only>
+  <remediation></remediation>
+  <severity>error</severity>
+  <short-name>MyAAA</short-name>
+  <updated-at type="datetime">2020-02-05 09:49:33</updated-at>
+<PolicyRuleLogic editor='logic-builder' expression='1' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<ConfigFileCheck label='1' note='' op='contains-all'>aaa accounting commands 1 default start-stop group .*
+aaa accounting commands 15 default start-stop group .*
+aaa accounting connection default start-stop group .*
+aaa accounting exec default start-stop group .*
+aaa accounting network default start-stop group .*
+aaa accounting system default start-stop group .*
+aaa accounting update newinfo
+aaa authentication login default group .* local
+aaa authorization commands 1 default group .* none
+aaa authorization commands 15 default group .* none
+aaa authorization config-commands
+aaa new-model
+aaa session-id common</ConfigFileCheck>
+
+</PolicyRuleLogic>  <NetmriVersion>7.4.1.95749</NetmriVersion>
+</policy-rule>
