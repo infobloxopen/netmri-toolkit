@@ -15,7 +15,8 @@ defaults = {
     "http_password": http_password,
     "job_id": job_id,
     "device_id": device_id,
-    "batch_id": batch_id
+    "batch_id": batch_id,
+    "script_login" : "false"
 }
 
 # Create NetMRI context manager. It will close session after execution
