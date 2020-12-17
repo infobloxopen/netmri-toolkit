@@ -1,0 +1,76 @@
+Script:
+	Remove Local Users
+
+Script-Description:
+	'Remove local users'
+
+Script-Filter:
+$Vendor eq "Cisco" and $SysDescr like /IOS/
+
+###############
+
+Action:
+Get Usernames
+
+Action-Commands:
+sho run | inc username
+SET: $UpdateMade = "no"
+
+Output-Triggers:
+Update Password
+
+################
+Trigger:
+Update Password
+
+Trigger-Variables:
+$username word
+
+Trigger-Template:
+username [[$username]] .+
+
+Trigger-Commands:{$UpdateMade eq "no"}
+config t
+SET: $UpdateMade = "yes"
+
+Trigger-Commands:{$UpdateMade eq "yes"}
+no $username
+SET: $unique_user = "MISSING"
+
+Output-Triggers:
+	Remove Local User
+
+#########################################################################
+Issue:
+	Remove Local User
+
+Issue-ID:
+	RemovedUsers
+
+Issue-Severity:
+	Error
+
+Issue-Description:
+	Remove local user
+
+Issue-Filter:
+	$unique_user eq "MISSING"
+
+Issue-Details:
+	Host		$IPAddress
+	Name		$Name
+	RemovedUser $username
+
+#########################################################################
+Action:
+Create Admin
+
+Action-Commands:{$UpdateMade eq "yes"}
+username admin password infoblox
+end wr mem
+
+Action-Commands:{$UpdateMade eq "no"}
+config t
+username admin password infoblox
+end wr mem
+
