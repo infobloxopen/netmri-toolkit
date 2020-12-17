@@ -68,11 +68,10 @@ Create Admin
 Action-Commands:{$UpdateMade eq "yes"}
 username admin password infoblox
 end 
-wr mem
+copy run start \r
 
 Action-Commands:{$UpdateMade eq "no"}
 config t
 username admin password infoblox
 end 
-wr mem
-
+copy run start \r
