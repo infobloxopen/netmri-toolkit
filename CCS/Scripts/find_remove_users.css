@@ -34,7 +34,7 @@ config t
 SET: $UpdateMade = "yes"
 
 Trigger-Commands:{$UpdateMade eq "yes"}
-no $username
+no $username\r
 SET: $unique_user = "MISSING"
 
 Output-Triggers:
