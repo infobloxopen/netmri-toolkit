@@ -4,3 +4,6 @@
 
 #Ignore OSX
 .DS_Store
+
+#Ignore venv
+venv/**
