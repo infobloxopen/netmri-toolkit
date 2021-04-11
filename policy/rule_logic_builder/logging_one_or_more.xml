@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<policy-rule>
+  <action-after-exec nil="true"></action-after-exec>
+  <author>Sif Baksh</author>
+  <created-at type="datetime">2021-04-11 08:05:30</created-at>
+  <description>Checking logging</description>
+  <name>Sif - Logging with or</name>
+  <read-only type="boolean">false</read-only>
+  <remediation>Change the logging on the Device</remediation>
+  <severity>error</severity>
+  <short-name>SBlogging</short-name>
+  <updated-at type="datetime">2021-04-11 08:14:03</updated-at>
+<PolicyRuleLogic editor='logic-builder' expression='(1 and 2 and 7)' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<Expr label='1' note='' op='contains'><Expr field='devicesysdescr'/><Expr value='IOS'/></Expr>
+<ConfigFileCheck label='2' note='' op='contains-all'>logging host 10.10.10.244
+logging host 10.10.10.(212|213|30)</ConfigFileCheck>
+<ConfigFileCheck label='7' note='' op='does-not-contain-any'>logging host (?!(10.10.10.244|10.10.10.212|10.10.10.213|10.10.10.30))</ConfigFileCheck>
+
+</PolicyRuleLogic><SetFilter editor='logic-builder' expression='1' xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+<Expr label='1' note='' op='='><Expr field='devicevendor'/><Expr value='Cisco'/></Expr>
+
+</SetFilter>  <NetmriVersion>7.4.4.99125</NetmriVersion>
+</policy-rule>
