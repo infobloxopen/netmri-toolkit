@@ -3,8 +3,10 @@ Infoblox NetMRI Toolkit
 ===============================
 Public repository with example content for NetMRI
 
-Join us on `#slack
-<https://join.slack.com/t/infobloxnetmri/shared_invite/enQtNzgyNzIxNDk0NjYxLThkMTMwMTk3NjA2MzY1Zjc5OTY0NWU1YzM5ODJjNTM0N2FjOWQ0OTk2NjI1ZmI4ZmQ1M2VjYzUzZmE1MTlkZTg>`_.
+Join us on `#Discord
+<https://discord.gg/QebESC3T7X>`_.
+
+Yes we moved from SLACK
 
 We encourage the NetMRI community to share scripts and collaborate here.  
 All contributions are welcome, e.g. CCS, Perl, Python, external scripts, Policy XML
