@@ -1,0 +1,158 @@
+<PolicyRuleLogic editor="raw-xml" xmlns='http://www.infoblox.com/NetworkAutomation/1.0/ScriptXml'>
+  <Expr op='array' output='good-templates'/>
+  <ConfigBlockCheck block-end='exit-peer-session' block-start='template peer-session (.*)' boundary-method='regexp'>
+    <If>
+      <ConfigFileCheck op='contains-all'>password</ConfigFileCheck>
+      <Then>
+        <Expr op='push'>
+          <Expr variable='good-templates'/>
+          <Expr variable='_start_match_1'/>
+        </Expr>
+      </Then>
+    </If>
+  </ConfigBlockCheck>
+  <Expr op='array' output='good-peer-groups'/>
+  <ConfigBlockCheck block-start='neighbor ([-a-zA-Z_0-9]+) password' boundary-method='line-count' line-count='1'>
+    <Expr op='push'>
+      <Expr variable='good-peer-groups'/>
+      <Expr variable='_start_match_1'/>
+    </Expr>
+  </ConfigBlockCheck>
+  <Expr op='array' output='good-neighbors'/>
+  <Expr op='array' output='possible-bad-neighbors'/>
+  <ConfigBlockCheck block-start='neighbor ([\.0-9]+)' boundary-method='line-count' line-count='1'>
+    <If>
+      <Expr op='and'>
+        <Expr op='matches'>
+          <Expr variable='_block'/>
+          <Expr value='neighbor [\.0-9]+ peer-group (.*)'/>
+        </Expr>
+        <Expr op='in'>
+          <Expr variable='_match_1'/>
+          <Expr variable='good-peer-groups'/>
+        </Expr>
+      </Expr>
+      <Then>
+        <Expr op='push'>
+          <Expr variable='good-neighbors'/>
+          <Expr variable='_start_match_1'/>
+        </Expr>
+      </Then>
+      <ElseIf>
+        <Expr op='and'>
+          <Expr op='matches'>
+            <Expr variable='_block'/>
+            <Expr value='neighbor inherit peer-session (.*)'/>
+          </Expr>
+          <Expr op='in'>
+            <Expr variable='_match_1'/>
+            <Expr variable='good-templates'/>
+          </Expr>
+        </Expr>
+        <Then>
+          <Expr op='push'>
+            <Expr variable='good-neighbors'/>
+            <Expr variable='_start_match_1'/>
+          </Expr>
+        </Then>
+      </ElseIf>
+      <ElseIf>
+        <Expr op='and'>
+          <Expr op='matches'>
+            <Expr variable='_block'/>
+            <Expr value='neighbor (.*)'/>
+          </Expr>
+          <Expr op='in'>
+            <Expr variable='_match_1'/>
+            <Expr variable='good-templates'/>
+          </Expr>
+        </Expr>
+        <Then>
+          <Expr op='push'>
+            <Expr variable='good-neighbors'/>
+            <Expr variable='_start_match_1'/>
+          </Expr>
+        </Then>
+      </ElseIf>
+      <ElseIf>
+        <Expr op='matches'>
+          <Expr variable='_block'/>
+          <Expr value='neighbor ([\.0-9]+) password .*'/>
+        </Expr>
+        <Then>
+          <If>
+            <Expr op='not-in'>
+              <Expr variable='_match_1'/>
+              <Expr variable='good-neighbors'/>
+            </Expr>
+            <Then>
+              <Expr op='push'>
+                <Expr variable='good-neighbors'/>
+                <Expr variable='_start_match_1'/>
+              </Expr>
+            </Then>
+          </If>
+        </Then>
+      </ElseIf>
+      <Else>
+        <If>
+          <Expr op='not-in'>
+            <Expr variable='_match_1'/>
+            <Expr variable='possible-bad-neighbors'/>
+          </Expr>
+          <Then>
+            <Expr op='push'>
+              <Expr variable='possible-bad-neighbors'/>
+              <Expr variable='_start_match_1'/>
+            </Expr>
+          </Then>
+        </If>
+      </Else>
+    </If>
+  </ConfigBlockCheck>
+  <Expr op='array' output='bad-neighbors'/>
+  <ForEach>
+    <Expr variable='possible-bad-neighbors'/>
+    <Do>
+      <If>
+        <Expr op='not-in'>
+          <Expr variable='_loop_value'/>
+          <Expr variable='good-neighbors'/>
+        </Expr>
+        <Then>
+          <Expr op='push'>
+            <Expr variable='bad-neighbors'/>
+            <Expr variable='_loop_value'/>
+          </Expr>
+        </Then>
+      </If>
+    </Do>
+  </ForEach>
+  <If>
+    <Expr op='ne'>
+      <Expr op='size'>
+        <Expr variable='bad-neighbors'/>
+      </Expr>
+      <Expr value='0'/>
+    </Expr>
+    <Then>
+      <Return>
+        <PolicyRuleFail>
+          <Expr op='concat'>
+            <Expr>The following neighbors do not have a password set </Expr>
+            <Expr op='join'>
+              <Expr variable='bad-neighbors'/>
+              <Expr value=','/>
+            </Expr>
+            <Expr>.</Expr>
+          </Expr>
+        </PolicyRuleFail>
+      </Return>
+    </Then>
+    <Else>
+      <Return>
+        <PolicyRulePass>All BGP Neighbors have a password set </PolicyRulePass>
+      </Return>
+    </Else>
+  </If>
+</PolicyRuleLogic>
